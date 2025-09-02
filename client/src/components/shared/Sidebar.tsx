@@ -31,7 +31,7 @@ export default function Sidebar() {
     }`;
 
   return (
-    <aside className="w-64 bg-card border-r border-border min-h-screen hidden md:block" data-testid="sidebar">
+    <aside className="w-64 bg-card shadow-lg min-h-screen hidden md:block" data-testid="sidebar">
       <nav className="p-4 space-y-2">
         <Link href="/portfolios">
           <button className={linkClass("/portfolios")} data-testid="sidebar-portfolios">

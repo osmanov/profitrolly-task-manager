@@ -73,7 +73,7 @@ export default function SystemSettings() {
   // Set form values when settings load
   useEffect(() => {
     if (settings && typeof settings === 'object' && 'maxDaysPerTask' in settings) {
-      setValue("maxDaysPerTask", settings.maxDaysPerTask || 3);
+      setValue("maxDaysPerTask", Number(settings.maxDaysPerTask) || 3);
     }
   }, [settings, setValue]);
 
@@ -138,6 +138,7 @@ export default function SystemSettings() {
                 <div className="flex items-end">
                   <Button
                     type="submit"
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                     disabled={updateSettings.isPending}
                     data-testid="button-update-settings"
                   >

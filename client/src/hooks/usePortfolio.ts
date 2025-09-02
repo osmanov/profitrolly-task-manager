@@ -38,14 +38,15 @@ export const useCreatePortfolio = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/portfolios"] });
       toast({
-        title: "Success",
-        description: "Portfolio created successfully",
+        title: "Успешно",
+        description: "Portfolio успешно создано",
+        variant: "success",
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to create portfolio",
+        title: "Ошибка",
+        description: error.message || "Не удалось создать portfolio",
         variant: "destructive",
       });
     },
@@ -65,14 +66,15 @@ export const useUpdatePortfolio = () => {
       queryClient.invalidateQueries({ queryKey: ["/api/portfolios"] });
       queryClient.invalidateQueries({ queryKey: ["/api/portfolios", id] });
       toast({
-        title: "Success",
-        description: "Portfolio updated successfully",
+        title: "Успешно",
+        description: "Portfolio успешно обновлено",
+        variant: "success",
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update portfolio",
+        title: "Ошибка",
+        description: error.message || "Не удалось обновить portfolio",
         variant: "destructive",
       });
     },
@@ -91,14 +93,15 @@ export const useDeletePortfolio = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/portfolios"] });
       toast({
-        title: "Success",
-        description: "Portfolio deleted successfully",
+        title: "Успешно",
+        description: "Portfolio успешно удалено",
+        variant: "success",
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete portfolio",
+        title: "Ошибка",
+        description: error.message || "Не удалось удалить portfolio",
         variant: "destructive",
       });
     },
@@ -120,8 +123,8 @@ export const useCreateTask = () => {
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to create task",
+        title: "Ошибка",
+        description: error.message || "Не удалось создать задачу",
         variant: "destructive",
       });
     },
@@ -142,8 +145,8 @@ export const useUpdateTask = () => {
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update task",
+        title: "Ошибка",
+        description: error.message || "Не удалось обновить задачу",
         variant: "destructive",
       });
     },
@@ -164,8 +167,8 @@ export const useDeleteTask = () => {
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to delete task",
+        title: "Ошибка",
+        description: error.message || "Не удалось удалить задачу",
         variant: "destructive",
       });
     },

@@ -29,7 +29,18 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
   const [, setLocation] = useLocation();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string>("");
-  const { hasUnsavedChanges, markAsChanged, markAsSaved } = useUnsavedChanges();
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  
+  const markAsChanged = () => {
+    if (isInitialized) {
+      setHasUnsavedChanges(true);
+    }
+  };
+  
+  const markAsSaved = () => {
+    setHasUnsavedChanges(false);
+  };
   const [tasks, setTasks] = useState<CreateTaskData[]>([
     {
       title: "",
@@ -66,12 +77,12 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
   // Track form changes
   useEffect(() => {
     const subscription = watch((value, { name, type }) => {
-      if (type === 'change' && name) {
+      if (type === 'change' && name && isInitialized) {
         markAsChanged();
       }
     });
     return () => subscription.unsubscribe();
-  }, [watch, markAsChanged]);
+  }, [watch, isInitialized]);
 
   const handleNavigateWithConfirmation = (path: string) => {
     if (hasUnsavedChanges) {
@@ -105,6 +116,12 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
           orderIndex: task.orderIndex,
         })));
       }
+      
+      // Mark as initialized after loading data
+      setTimeout(() => setIsInitialized(true), 100);
+    } else if (!isEditing) {
+      // For new portfolios, initialize immediately
+      setIsInitialized(true);
     }
   }, [portfolio, isEditing, setValue]);
 

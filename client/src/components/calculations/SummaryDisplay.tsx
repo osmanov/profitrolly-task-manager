@@ -34,14 +34,14 @@ export default function SummaryDisplay({ tasks, portfolioName, startDate }: Summ
       const markdown = generateMarkdownSummary(portfolioName, taskData, calculations, startDate);
       await navigator.clipboard.writeText(markdown);
       toast({
-        title: "Success",
-        description: "Markdown copied to clipboard!",
+        title: "Успешно",
+        description: "Jira сводка скопирована в буфер обмена!",
         className: "bg-green-100 border-green-500 text-green-800",
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to copy to clipboard",
+        title: "Ошибка",
+        description: "Не удалось скопировать в буфер обмена",
         variant: "destructive",
       });
     }

@@ -104,7 +104,7 @@ export const generateMarkdownSummary = (
 ): string => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
+    return date.toLocaleDateString('ru', { 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
@@ -137,24 +137,24 @@ export const generateMarkdownSummary = (
 
   // Start with Jira-style formatting
   let markdown = `h1. ${portfolioName}\n\n`;
-  markdown += `*Project Timeline:* ${formatDate(startDate)} - ${formatDate(calculations.endDate)}\n`;
-  markdown += `*Total Development Time:* ${calculations.totalDays} days (${calculations.storyPoints} story points)\n`;
-  markdown += `*Including Risk Buffer:* ${calculations.totalWithRisks} days (+${calculations.riskDays} risk days)\n\n`;
+  markdown += `*Временная линия проекта:* ${formatDate(startDate)} - ${formatDate(calculations.endDate)}\n`;
+  markdown += `*Общее время разработки:* ${calculations.totalDays} дн. (${calculations.storyPoints} story points)\n`;
+  markdown += `*С учетом рисков:* ${calculations.totalWithRisks} дн. (+${calculations.riskDays} дн. рисков)\n\n`;
 
-  markdown += `h2. Task Breakdown\n\n`;
+  markdown += `h2. Декомпозиция задач\n\n`;
 
   // Add sequential tasks by team
   if (Object.keys(sequentialByTeam).length > 0) {
-    markdown += `h3. Sequential Tasks\n\n`;
+    markdown += `h3. Последовательные задачи\n\n`;
     Object.entries(sequentialByTeam).forEach(([team, teamTasks]) => {
       const teamName = team.charAt(0).toUpperCase() + team.slice(1);
       const teamDays = teamTasks.reduce((sum, task) => sum + task.days, 0);
       
-      markdown += `h4. ${teamName} Team (${teamDays} days)\n\n`;
+      markdown += `h4. Команда ${teamName} (${teamDays} дн.)\n\n`;
       
       teamTasks.forEach(task => {
         markdown += `* *${task.title}* - ${task.description}\n`;
-        markdown += `  _Estimated time: ${task.days} day${task.days > 1 ? 's' : ''}_\n`;
+        markdown += `  _Оценка времени: ${task.days} ${task.days === 1 ? 'день' : task.days < 5 ? 'дня' : 'дней'}_\n`;
       });
       markdown += '\n';
     });
@@ -162,35 +162,35 @@ export const generateMarkdownSummary = (
 
   // Add parallel groups
   if (Object.keys(parallelGroups).length > 0) {
-    markdown += `h3. Parallel Task Groups\n\n`;
+    markdown += `h3. Группы параллельных задач\n\n`;
     Object.entries(parallelGroups).forEach(([groupName, groupTasks]) => {
       const maxDays = Math.max(...groupTasks.map(task => task.days));
       const totalGroupDays = groupTasks.reduce((sum, task) => sum + task.days, 0);
       
-      markdown += `h4. Group "${groupName}" (${maxDays} days effective, ${totalGroupDays} total work)\n`;
-      markdown += `_These tasks run in parallel - project timeline uses maximum duration_\n\n`;
+      markdown += `h4. Группа "${groupName}" (${maxDays} дн. эффективно, ${totalGroupDays} общий объем работ)\n`;
+      markdown += `_Эти задачи выполняются параллельно - временная линия проекта использует максимальную продолжительность_\n\n`;
       
       groupTasks.forEach(task => {
         markdown += `* *${task.title}* (${task.team}) - ${task.description}\n`;
-        markdown += `  _Estimated time: ${task.days} day${task.days > 1 ? 's' : ''}_\n`;
+        markdown += `  _Оценка времени: ${task.days} ${task.days === 1 ? 'день' : task.days < 5 ? 'дня' : 'дней'}_\n`;
       });
       markdown += '\n';
     });
   }
 
   // Add summary table in Jira format
-  markdown += `h2. Project Summary\n\n`;
-  markdown += `|| Metric || Value ||\n`;
-  markdown += `| Start Date | ${formatDate(startDate)} |\n`;
-  markdown += `| End Date | ${formatDate(calculations.endDate)} |\n`;
-  markdown += `| Development Days | ${calculations.totalDays} |\n`;
-  markdown += `| Risk Days | +${calculations.riskDays} |\n`;
-  markdown += `| Total Duration | ${calculations.totalWithRisks} days |\n`;
+  markdown += `h2. Итоговая сводка по проекту\n\n`;
+  markdown += `|| Метрика || Значение ||\n`;
+  markdown += `| Дата начала | ${formatDate(startDate)} |\n`;
+  markdown += `| Дата окончания | ${formatDate(calculations.endDate)} |\n`;
+  markdown += `| Дни разработки | ${calculations.totalDays} |\n`;
+  markdown += `| Дни рисков | +${calculations.riskDays} |\n`;
+  markdown += `| Общая продолжительность | ${calculations.totalWithRisks} дн. |\n`;
   markdown += `| Story Points | ${calculations.storyPoints} |\n\n`;
 
   // Add team allocation table
-  markdown += `h2. Team Allocation\n\n`;
-  markdown += `|| Team || Days || Percentage ||\n`;
+  markdown += `h2. Распределение по командам\n\n`;
+  markdown += `|| Команда || Дни || Процент ||\n`;
   
   Object.entries(calculations.teamDistribution).forEach(([team, days]) => {
     const teamName = team.charAt(0).toUpperCase() + team.slice(1);

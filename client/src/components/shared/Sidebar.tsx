@@ -2,36 +2,15 @@ import { Briefcase, Plus, Settings } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useState } from "react";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function Sidebar() {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
   const isMobile = useIsMobile();
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [pendingPath, setPendingPath] = useState("");
-  
-  // Check if user is currently editing a portfolio
-  const isOnEditPage = location.startsWith('/portfolios/') && location !== '/portfolios' && location !== '/portfolios/new';
   
   const handleNavigateToNew = () => {
-    if (isOnEditPage) {
-      // Check if there are unsaved changes by looking for form elements
-      const hasFormInputs = document.querySelector('input, textarea, select');
-      if (hasFormInputs) {
-        setPendingPath('/portfolios/new');
-        setShowConfirmDialog(true);
-        return;
-      }
-    }
+    // Simply navigate to new portfolio - individual forms handle their own unsaved changes logic
     setLocation('/portfolios/new');
-  };
-  
-  const handleConfirmNavigation = () => {
-    setLocation(pendingPath);
-    setShowConfirmDialog(false);
-    setPendingPath("");
   };
   
   // Hide sidebar on mobile devices
@@ -87,14 +66,6 @@ export default function Sidebar() {
           </>
         )}
       </nav>
-      
-      <ConfirmDialog
-        open={showConfirmDialog}
-        onOpenChange={setShowConfirmDialog}
-        title="Несохранённые изменения"
-        description="У вас есть несохранённые изменения. Вы уверены, что хотите покинуть эту страницу?"
-        onConfirm={handleConfirmNavigation}
-      />
     </aside>
   );
 }

@@ -28,10 +28,10 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent data-testid="confirm-dialog">
+      <AlertDialogContent data-testid="confirm-dialog" className="bg-white dark:bg-white border border-gray-200 shadow-xl">
         <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
+          <AlertDialogTitle className="text-gray-900">{title}</AlertDialogTitle>
+          <AlertDialogDescription className="text-gray-600">{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel 
@@ -40,6 +40,7 @@ export function ConfirmDialog({
               onOpenChange(false);
             }}
             data-testid="confirm-dialog-cancel"
+            className="bg-gray-100 text-gray-900 border-gray-300 hover:bg-gray-200"
           >
             Отмена
           </AlertDialogCancel>
@@ -49,6 +50,7 @@ export function ConfirmDialog({
               onOpenChange(false);
             }}
             data-testid="confirm-dialog-confirm"
+            className="bg-red-600 text-white hover:bg-red-700"
           >
             Продолжить
           </AlertDialogAction>

@@ -11,21 +11,21 @@
   --card-foreground: hsl(217, 19%, 27%);
   --popover: hsl(0, 0%, 100%);
   --popover-foreground: hsl(217, 19%, 27%);
-  --primary: hsl(217, 91%, 49%); /* Jira's signature blue */
+  --primary: hsl(217, 91%, 55%); /* Brighter Jira blue */
   --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(212, 45%, 89%); /* Light blue-gray */
-  --secondary-foreground: hsl(217, 19%, 27%);
-  --muted: hsl(218, 18%, 94%); /* Very light gray-blue */
-  --muted-foreground: hsl(217, 12%, 63%); /* Medium gray */
+  --secondary: hsl(214, 100%, 97%); /* Very light blue background */
+  --secondary-foreground: hsl(217, 91%, 55%); /* Primary blue text */
+  --muted: hsl(214, 32%, 91%); /* Light blue-tinted */
+  --muted-foreground: hsl(217, 25%, 45%); /* Darker for contrast */
   --accent: hsl(197, 71%, 52%); /* Confluence teal */
   --accent-foreground: hsl(0, 0%, 100%);
   --destructive: hsl(358, 75%, 59%); /* Jira red */
   --destructive-foreground: hsl(0, 0%, 100%);
   --warning: hsl(42, 100%, 55%); /* Jira orange */
   --success: hsl(121, 47%, 48%); /* Jira green */
-  --border: hsl(214, 18%, 88%); /* Light border */
-  --input: hsl(214, 18%, 88%);
-  --ring: hsl(217, 91%, 49%);
+  --border: hsl(214, 32%, 82%); /* More prominent border */
+  --input: hsl(214, 32%, 96%); /* Light blue input background */
+  --ring: hsl(217, 91%, 55%);
   --chart-1: hsl(217, 91%, 49%); /* Primary blue */
   --chart-2: hsl(121, 47%, 48%); /* Green */
   --chart-3: hsl(42, 100%, 55%); /* Orange */
@@ -96,5 +96,36 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
     font-family: var(--font-sans);
+  }
+}
+
+@layer components {
+  /* Enhanced primary buttons with Jira styling */
+  .btn-primary {
+    @apply bg-primary hover:bg-primary/90 text-primary-foreground;
+    @apply shadow-sm hover:shadow-md transition-all duration-200;
+  }
+
+  /* Enhanced secondary buttons */
+  .btn-secondary {
+    @apply bg-secondary hover:bg-secondary/80 text-secondary-foreground;
+    @apply border border-border hover:border-primary/30;
+  }
+
+  /* Enhanced form inputs with blue tinting */
+  .form-input {
+    @apply bg-input border-border focus:border-primary/50 focus:ring-2 focus:ring-primary/20;
+    @apply transition-all duration-200;
+  }
+
+  /* Enhanced cards with subtle blue tinting */
+  .card-enhanced {
+    @apply bg-card border-border shadow-sm;
+    @apply hover:shadow-md hover:border-primary/20 transition-all duration-200;
+  }
+
+  /* Header gradient background */
+  .header-gradient {
+    background: linear-gradient(135deg, hsl(217, 91%, 55%) 0%, hsl(197, 71%, 52%) 100%);
   }
 }

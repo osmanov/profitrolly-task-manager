@@ -15,21 +15,21 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-card border-b border-border px-6 py-4" data-testid="header">
+    <header className="header-gradient border-b border-primary/20 px-6 py-4 shadow-sm" data-testid="header">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Link href="/portfolios">
-            <h1 className="text-2xl font-bold text-primary cursor-pointer" data-testid="text-app-title">
+            <h1 className="text-2xl font-bold text-white cursor-pointer drop-shadow-sm" data-testid="text-app-title">
               profiTrolly
             </h1>
           </Link>
           <nav className="hidden md:flex space-x-6">
             <Link href="/portfolios">
               <button
-                className={`transition-colors ${
+                className={`transition-colors font-medium ${
                   isActive("/portfolios")
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-primary"
+                    ? "text-white bg-white/20 px-3 py-2 rounded-md"
+                    : "text-white/80 hover:text-white hover:bg-white/10 px-3 py-2 rounded-md"
                 }`}
                 data-testid="nav-portfolios"
               >
@@ -39,10 +39,10 @@ export default function Header() {
             {user?.role === "admin" && (
               <Link href="/settings">
                 <button
-                  className={`transition-colors ${
+                  className={`transition-colors font-medium ${
                     isActive("/settings")
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-primary"
+                      ? "text-white bg-white/20 px-3 py-2 rounded-md"
+                      : "text-white/80 hover:text-white hover:bg-white/10 px-3 py-2 rounded-md"
                   }`}
                   data-testid="nav-settings"
                 >
@@ -54,14 +54,14 @@ export default function Header() {
         </div>
 
         <div className="flex items-center space-x-4">
-          <span className="text-sm text-muted-foreground" data-testid="text-user-name">
+          <span className="text-sm text-white/90 font-medium" data-testid="text-user-name">
             {user?.fullName}
           </span>
           <Button
             variant="ghost"
             size="sm"
             onClick={logout}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-white/80 hover:text-white hover:bg-white/10"
             data-testid="button-logout"
           >
             <LogOut className="h-4 w-4 mr-2" />

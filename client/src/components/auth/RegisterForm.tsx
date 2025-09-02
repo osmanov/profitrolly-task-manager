@@ -37,9 +37,9 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-md" data-testid="register-form">
+    <Card className="w-full max-w-md card-enhanced shadow-xl" data-testid="register-form">
       <CardHeader className="text-center">
-        <CardTitle className="text-3xl font-bold text-primary mb-2">profiTrolly</CardTitle>
+        <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">profiTrolly</CardTitle>
         <p className="text-muted-foreground">Create your account</p>
       </CardHeader>
       <CardContent>
@@ -102,7 +102,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
 
           <Button
             type="submit"
-            className="w-full"
+            className="w-full btn-primary shadow-md"
             disabled={isRegisterPending}
             data-testid="button-register"
           >
@@ -113,6 +113,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
             <Button
               type="button"
               variant="link"
+              className="text-primary hover:text-primary/80"
               onClick={onSwitchToLogin}
               data-testid="button-switch-login"
             >

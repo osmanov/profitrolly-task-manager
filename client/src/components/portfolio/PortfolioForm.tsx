@@ -210,9 +210,9 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Form Section */}
         <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Portfolio Details</CardTitle>
+          <Card className="card-enhanced">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
+              <CardTitle className="text-primary font-bold">Portfolio Details</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -250,7 +250,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
                     <h3 className="text-lg font-medium">Tasks</h3>
                     <Button
                       type="button"
-                      variant="secondary"
+                      className="btn-secondary border-primary/30 hover:bg-primary/10"
                       size="sm"
                       onClick={addTask}
                       data-testid="button-add-task"
@@ -276,6 +276,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
                 <div className="flex space-x-4 pt-6 border-t border-border">
                   <Button
                     type="submit"
+                    className="btn-primary shadow-md"
                     disabled={createPortfolio.isPending || updatePortfolio.isPending}
                     data-testid="button-save-portfolio"
                   >
@@ -286,7 +287,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
                   </Button>
                   <Button
                     type="button"
-                    variant="secondary"
+                    className="btn-secondary"
                     onClick={() => setLocation("/portfolios")}
                     data-testid="button-cancel"
                   >

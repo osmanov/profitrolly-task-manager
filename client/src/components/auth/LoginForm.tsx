@@ -33,9 +33,9 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-md" data-testid="login-form">
+    <Card className="w-full max-w-md card-enhanced shadow-xl" data-testid="login-form">
       <CardHeader className="text-center">
-        <CardTitle className="text-3xl font-bold text-primary mb-2">profiTrolly</CardTitle>
+        <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">profiTrolly</CardTitle>
         <p className="text-muted-foreground">Task Decomposition & Risk Calculator</p>
       </CardHeader>
       <CardContent>
@@ -70,7 +70,7 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
 
           <Button
             type="submit"
-            className="w-full"
+            className="w-full btn-primary shadow-md"
             disabled={isLoginPending}
             data-testid="button-login"
           >
@@ -81,6 +81,7 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
             <Button
               type="button"
               variant="link"
+              className="text-primary hover:text-primary/80"
               onClick={onSwitchToRegister}
               data-testid="button-switch-register"
             >

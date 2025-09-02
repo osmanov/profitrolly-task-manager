@@ -66,7 +66,7 @@ export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove }
         )}
       </div>
 
-      <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-4">
         <div>
           <Label htmlFor={`title-${index}`}>Название задачи</Label>
           <Input
@@ -78,7 +78,7 @@ export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove }
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
             <Label htmlFor={`team-${index}`}>Команда</Label>
             <Select
@@ -110,20 +110,20 @@ export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove }
               data-testid={`input-task-days-${index}`}
             />
           </div>
+        </div>
 
-          <div>
-            <Label htmlFor={`parallel-group-${index}`}>
-              Параллельная группа
-              <span className="text-xs text-muted-foreground ml-1">(опционально)</span>
-            </Label>
-            <Input
-              id={`parallel-group-${index}`}
-              placeholder="напр., группа-1"
-              value={task.parallelGroup || ""}
-              onChange={(e) => handleChange("parallelGroup", e.target.value || undefined)}
-              data-testid={`input-parallel-group-${index}`}
-            />
-          </div>
+        <div>
+          <Label htmlFor={`parallel-group-${index}`}>
+            Параллельная группа
+            <span className="text-xs text-muted-foreground ml-1">(опционально)</span>
+          </Label>
+          <Input
+            id={`parallel-group-${index}`}
+            placeholder="напр., группа-1"
+            value={task.parallelGroup || ""}
+            onChange={(e) => handleChange("parallelGroup", e.target.value || undefined)}
+            data-testid={`input-parallel-group-${index}`}
+          />
         </div>
       </div>
 

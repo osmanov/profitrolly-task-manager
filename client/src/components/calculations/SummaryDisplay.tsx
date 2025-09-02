@@ -112,16 +112,16 @@ export default function SummaryDisplay({ tasks, portfolioName, startDate }: Summ
           </div>
         )}
 
-        {/* Export Button */}
-        <Button
+        {/* Export Link */}
+        <button
           onClick={copyMarkdown}
-          className="w-full bg-teal-600 hover:bg-teal-700 text-white shadow-lg"
+          className="w-full text-teal-600 hover:text-teal-700 underline text-center py-2 disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={!portfolioName || tasks.length === 0}
           data-testid="button-copy-markdown"
         >
-          <Copy className="h-4 w-4 mr-2" />
+          <Copy className="h-4 w-4 mr-2 inline" />
           Copy Jira Summary
-        </Button>
+        </button>
       </CardContent>
     </Card>
   );

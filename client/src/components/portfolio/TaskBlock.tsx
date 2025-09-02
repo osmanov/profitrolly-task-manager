@@ -21,7 +21,7 @@ const TEAMS = [
 ];
 
 export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove }: TaskBlockProps) {
-  const handleChange = (field: keyof CreateTaskData, value: string | number) => {
+  const handleChange = (field: keyof CreateTaskData, value: string | number | undefined) => {
     onUpdate(index, { ...task, [field]: value });
   };
 
@@ -78,7 +78,7 @@ export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove }
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <div>
             <Label htmlFor={`team-${index}`}>Team</Label>
             <Select
@@ -108,6 +108,20 @@ export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove }
               value={task.days}
               onChange={(e) => handleChange("days", parseInt(e.target.value) || 1)}
               data-testid={`input-task-days-${index}`}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor={`parallel-group-${index}`}>
+              Parallel Group
+              <span className="text-xs text-muted-foreground ml-1">(optional)</span>
+            </Label>
+            <Input
+              id={`parallel-group-${index}`}
+              placeholder="e.g., group-1"
+              value={task.parallelGroup || ""}
+              onChange={(e) => handleChange("parallelGroup", e.target.value || undefined)}
+              data-testid={`input-parallel-group-${index}`}
             />
           </div>
         </div>

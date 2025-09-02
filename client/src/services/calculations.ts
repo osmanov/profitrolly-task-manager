@@ -56,7 +56,30 @@ export const calculateEndDate = (startDate: string, totalDaysWithRisks: number):
 };
 
 export const calculatePortfolioMetrics = (tasks: Task[], startDate: string): CalculationResults => {
-  const totalDays = tasks.reduce((sum, task) => sum + task.days, 0);
+  // Group tasks by parallelGroup
+  const parallelGroups: { [key: string]: Task[] } = {};
+  const sequentialTasks: Task[] = [];
+
+  tasks.forEach(task => {
+    if (task.parallelGroup && task.parallelGroup.trim()) {
+      if (!parallelGroups[task.parallelGroup]) {
+        parallelGroups[task.parallelGroup] = [];
+      }
+      parallelGroups[task.parallelGroup].push(task);
+    } else {
+      sequentialTasks.push(task);
+    }
+  });
+
+  // Calculate total days: sum of sequential tasks + max days from each parallel group
+  let totalDays = sequentialTasks.reduce((sum, task) => sum + task.days, 0);
+  
+  // For each parallel group, take the maximum days instead of sum
+  Object.values(parallelGroups).forEach(groupTasks => {
+    const maxDaysInGroup = Math.max(...groupTasks.map(task => task.days));
+    totalDays += maxDaysInGroup;
+  });
+
   const storyPoints = calculateStoryPoints(totalDays);
   const riskDays = calculateRiskDays(totalDays);
   const totalWithRisks = totalDays + riskDays;
@@ -88,8 +111,23 @@ export const generateMarkdownSummary = (
     });
   };
 
-  // Group tasks by team
-  const tasksByTeam = tasks.reduce((acc, task) => {
+  // Group tasks by parallelGroup first, then by team
+  const parallelGroups: { [key: string]: Task[] } = {};
+  const sequentialTasks: Task[] = [];
+
+  tasks.forEach(task => {
+    if (task.parallelGroup && task.parallelGroup.trim()) {
+      if (!parallelGroups[task.parallelGroup]) {
+        parallelGroups[task.parallelGroup] = [];
+      }
+      parallelGroups[task.parallelGroup].push(task);
+    } else {
+      sequentialTasks.push(task);
+    }
+  });
+
+  // Group sequential tasks by team
+  const sequentialByTeam = sequentialTasks.reduce((acc, task) => {
     if (!acc[task.team]) {
       acc[task.team] = [];
     }
@@ -103,21 +141,42 @@ export const generateMarkdownSummary = (
   markdown += `*Total Development Time:* ${calculations.totalDays} days (${calculations.storyPoints} story points)\n`;
   markdown += `*Including Risk Buffer:* ${calculations.totalWithRisks} days (+${calculations.riskDays} risk days)\n\n`;
 
-  markdown += `h2. Task Breakdown by Team\n\n`;
+  markdown += `h2. Task Breakdown\n\n`;
 
-  // Add tasks by team in Jira format
-  Object.entries(tasksByTeam).forEach(([team, teamTasks]) => {
-    const teamName = team.charAt(0).toUpperCase() + team.slice(1);
-    const teamDays = teamTasks.reduce((sum, task) => sum + task.days, 0);
-    
-    markdown += `h3. ${teamName} Team (${teamDays} days)\n\n`;
-    
-    teamTasks.forEach(task => {
-      markdown += `* *${task.title}* - ${task.description}\n`;
-      markdown += `  _Estimated time: ${task.days} day${task.days > 1 ? 's' : ''}_\n`;
+  // Add sequential tasks by team
+  if (Object.keys(sequentialByTeam).length > 0) {
+    markdown += `h3. Sequential Tasks\n\n`;
+    Object.entries(sequentialByTeam).forEach(([team, teamTasks]) => {
+      const teamName = team.charAt(0).toUpperCase() + team.slice(1);
+      const teamDays = teamTasks.reduce((sum, task) => sum + task.days, 0);
+      
+      markdown += `h4. ${teamName} Team (${teamDays} days)\n\n`;
+      
+      teamTasks.forEach(task => {
+        markdown += `* *${task.title}* - ${task.description}\n`;
+        markdown += `  _Estimated time: ${task.days} day${task.days > 1 ? 's' : ''}_\n`;
+      });
+      markdown += '\n';
     });
-    markdown += '\n';
-  });
+  }
+
+  // Add parallel groups
+  if (Object.keys(parallelGroups).length > 0) {
+    markdown += `h3. Parallel Task Groups\n\n`;
+    Object.entries(parallelGroups).forEach(([groupName, groupTasks]) => {
+      const maxDays = Math.max(...groupTasks.map(task => task.days));
+      const totalGroupDays = groupTasks.reduce((sum, task) => sum + task.days, 0);
+      
+      markdown += `h4. Group "${groupName}" (${maxDays} days effective, ${totalGroupDays} total work)\n`;
+      markdown += `_These tasks run in parallel - project timeline uses maximum duration_\n\n`;
+      
+      groupTasks.forEach(task => {
+        markdown += `* *${task.title}* (${task.team}) - ${task.description}\n`;
+        markdown += `  _Estimated time: ${task.days} day${task.days > 1 ? 's' : ''}_\n`;
+      });
+      markdown += '\n';
+    });
+  }
 
   // Add summary table in Jira format
   markdown += `h2. Project Summary\n\n`;

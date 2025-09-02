@@ -31,6 +31,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
       description: "",
       team: "frontend",
       days: 1,
+      parallelGroup: undefined,
       orderIndex: 0,
     },
   ]);
@@ -81,6 +82,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
       description: "",
       team: "frontend",
       days: 1,
+      parallelGroup: undefined,
       orderIndex: tasks.length,
     }]);
   };

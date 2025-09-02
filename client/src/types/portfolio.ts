@@ -5,6 +5,7 @@ export interface Task {
   description: string;
   team: string;
   days: number;
+  parallelGroup?: string; // Tasks with same group run in parallel
   orderIndex: number;
   createdAt: string;
 }
@@ -38,6 +39,7 @@ export interface CreateTaskData {
   description: string;
   team: string;
   days: number;
+  parallelGroup?: string; // Tasks with same group run in parallel
   orderIndex: number;
 }
 

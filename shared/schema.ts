@@ -45,6 +45,7 @@ export const tasks = pgTable("tasks", {
   description: text("description").notNull(),
   team: varchar("team", { length: 50 }).notNull(),
   days: integer("days").notNull(),
+  parallelGroup: varchar("parallel_group", { length: 50 }), // Tasks with same group run in parallel
   orderIndex: integer("order_index").notNull().default(0),
   createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });

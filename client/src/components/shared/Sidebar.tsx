@@ -1,10 +1,17 @@
 import { Briefcase, Plus, Settings } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Sidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
+  
+  // Hide sidebar on mobile devices
+  if (isMobile) {
+    return null;
+  }
 
   const isActive = (path: string) => {
     if (path === "/portfolios" && (location === "/" || location === "/portfolios")) {
@@ -24,7 +31,7 @@ export default function Sidebar() {
     }`;
 
   return (
-    <aside className="w-64 bg-card border-r border-border min-h-screen" data-testid="sidebar">
+    <aside className="w-64 bg-card border-r border-border min-h-screen hidden md:block" data-testid="sidebar">
       <nav className="p-4 space-y-2">
         <Link href="/portfolios">
           <button className={linkClass("/portfolios")} data-testid="sidebar-portfolios">

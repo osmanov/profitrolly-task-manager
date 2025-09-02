@@ -66,7 +66,7 @@ export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove }
         )}
       </div>
 
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor={`title-${index}`}>Название задачи</Label>
           <Input
@@ -78,7 +78,7 @@ export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove }
           />
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <div>
             <Label htmlFor={`team-${index}`}>Команда</Label>
             <Select

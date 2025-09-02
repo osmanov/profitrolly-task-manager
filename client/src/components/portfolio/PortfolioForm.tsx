@@ -207,9 +207,9 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
         </Button>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 gap-4 lg:gap-6">
         {/* Form Section */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 order-2 lg:order-1">
           <Card className="shadow-xl border-t-4 border-t-blue-600 bg-blue-50">
             <CardHeader className="bg-blue-100">
               <CardTitle className="text-blue-700 font-bold">Детали Portfolio</CardTitle>
@@ -273,10 +273,10 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex space-x-4 pt-6 border-t border-border">
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 pt-6 border-t border-border">
                   <Button
                     type="submit"
-                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
                     disabled={createPortfolio.isPending || updatePortfolio.isPending}
                     data-testid="button-save-portfolio"
                   >
@@ -287,7 +287,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
                   </Button>
                   <Button
                     type="button"
-                    className="bg-gray-500 hover:bg-gray-600 text-white"
+                    className="w-full sm:w-auto bg-gray-500 hover:bg-gray-600 text-white"
                     onClick={() => setLocation("/portfolios")}
                     data-testid="button-cancel"
                   >
@@ -300,7 +300,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
         </div>
 
         {/* Calculations Sidebar */}
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 order-1 lg:order-2">
           <SummaryDisplay
             tasks={tasks}
             portfolioName={watchedValues.name || ""}

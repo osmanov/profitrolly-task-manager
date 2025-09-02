@@ -37,7 +37,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-md shadow-2xl border-t-4 border-t-blue-600 bg-blue-50" data-testid="register-form">
+    <Card className="w-full max-w-md mx-4 shadow-2xl border-t-4 border-t-blue-600 bg-blue-50" data-testid="register-form">
       <CardHeader className="text-center">
         <CardTitle className="text-3xl font-bold text-blue-700 mb-2">profiTrolly</CardTitle>
         <p className="text-muted-foreground">Создайте ваш аккаунт</p>

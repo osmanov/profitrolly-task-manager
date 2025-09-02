@@ -57,7 +57,7 @@ export default function SummaryDisplay({ tasks, portfolioName, startDate }: Summ
   };
 
   return (
-    <Card className="sticky top-6 shadow-xl border-l-4 border-l-teal-500 bg-teal-50" data-testid="summary-display">
+    <Card className="lg:sticky lg:top-6 shadow-xl border-l-4 border-l-teal-500 bg-teal-50" data-testid="summary-display">
       <CardHeader className="bg-teal-100">
         <CardTitle className="text-teal-700 font-bold">Расчёты</CardTitle>
       </CardHeader>

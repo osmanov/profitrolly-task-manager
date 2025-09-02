@@ -117,7 +117,7 @@ export default function SystemSettings() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)}>
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="maxDaysPerTask">Максимум дней на задачу</Label>
                   <Input
@@ -183,7 +183,7 @@ export default function SystemSettings() {
             <CardTitle>Информация о системе</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-2 gap-4 text-sm">
+            <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-muted-foreground">Версия приложения</p>
                 <p className="font-medium" data-testid="text-app-version">v1.0.0</p>

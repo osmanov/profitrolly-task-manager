@@ -33,7 +33,7 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-md shadow-2xl border-t-4 border-t-blue-600 bg-blue-50" data-testid="login-form">
+    <Card className="w-full max-w-md mx-4 shadow-2xl border-t-4 border-t-blue-600 bg-blue-50" data-testid="login-form">
       <CardHeader className="text-center">
         <CardTitle className="text-3xl font-bold text-blue-700 mb-2">profiTrolly</CardTitle>
         <p className="text-muted-foreground">Декомпозиция задач и расчет рисков</p>

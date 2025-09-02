@@ -87,7 +87,7 @@ export default function PortfolioList() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 items-stretch">
+        <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-stretch">
           {portfolios.map((portfolio) => (
             <Card key={portfolio.id} className="hover:shadow-xl transition-all duration-300 border-l-4 border-l-blue-500 bg-blue-50 h-full" data-testid={`card-portfolio-${portfolio.id}`}>
               <CardHeader>
@@ -106,7 +106,7 @@ export default function PortfolioList() {
                     Создано: {formatDate(portfolio.createdAt)}
                   </p>
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                   <Link href={`/portfolios/${portfolio.id}`}>
                     <Button variant="outline" size="sm" className="border-blue-500 text-blue-600 hover:bg-blue-100" data-testid={`button-edit-${portfolio.id}`}>
                       <Edit className="h-4 w-4 mr-1" />

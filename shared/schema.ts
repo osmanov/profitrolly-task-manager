@@ -81,6 +81,7 @@ export const systemSettingsRelations = relations(systemSettings, ({ one }) => ({
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
+  passwordHash: true,
 }).extend({
   password: z.string().min(8, "Password must be at least 8 characters")
     .regex(/(?=.*[a-zA-Z])(?=.*\d)/, "Password must contain letters and numbers"),

@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -9,7 +9,7 @@ import { z } from "zod";
 const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-jwt-key";
 const JWT_EXPIRES_IN = "7d";
 
-interface AuthRequest extends Express.Request {
+interface AuthRequest extends Request {
   user?: {
     id: string;
     username: string;
@@ -18,7 +18,7 @@ interface AuthRequest extends Express.Request {
 }
 
 // Middleware for authentication
-const authenticateToken = async (req: AuthRequest, res: Express.Response, next: Express.NextFunction) => {
+const authenticateToken = async (req: AuthRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.split(' ')[1];
 
@@ -46,7 +46,7 @@ const authenticateToken = async (req: AuthRequest, res: Express.Response, next: 
 };
 
 // Middleware for admin-only routes
-const requireAdmin = (req: AuthRequest, res: Express.Response, next: Express.NextFunction) => {
+const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
   if (req.user?.role !== "admin") {
     return res.status(403).json({ message: "Admin access required" });
   }

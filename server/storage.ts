@@ -83,11 +83,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
+    const { password, ...userWithoutPassword } = insertUser;
     const [user] = await db
       .insert(users)
       .values({
-        ...insertUser,
-        passwordHash: insertUser.password,
+        ...userWithoutPassword,
+        passwordHash: password,
       })
       .returning();
     return user;
@@ -140,6 +141,7 @@ export class DatabaseStorage implements IStorage {
     return {
       ...portfolio,
       tasks: portfolioTasks,
+      user: portfolio.user!,
     };
   }
 

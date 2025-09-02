@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -70,8 +71,8 @@ export default function SystemSettings() {
   });
 
   // Set form values when settings load
-  React.useEffect(() => {
-    if (settings) {
+  useEffect(() => {
+    if (settings && typeof settings === 'object' && 'maxDaysPerTask' in settings) {
       setValue("maxDaysPerTask", settings.maxDaysPerTask || 3);
     }
   }, [settings, setValue]);

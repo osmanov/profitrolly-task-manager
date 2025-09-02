@@ -40,6 +40,15 @@ export const calculateEndDate = (startDate: string, totalDaysWithRisks: number):
   let workDaysAdded = 0;
   let currentDate = new Date(start);
 
+  // Check if start date is a working day and count it as the first day
+  const startDayOfWeek = currentDate.getDay();
+  const startDateString = currentDate.toISOString().split('T')[0];
+  
+  if (startDayOfWeek !== 0 && startDayOfWeek !== 6 && !holidaySet.has(startDateString)) {
+    workDaysAdded = 1; // Start date counts as the first working day
+  }
+
+  // If we need more days, continue adding
   while (workDaysAdded < totalDaysWithRisks) {
     currentDate.setDate(currentDate.getDate() + 1);
     

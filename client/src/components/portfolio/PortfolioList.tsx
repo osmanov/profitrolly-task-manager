@@ -25,7 +25,7 @@ export default function PortfolioList() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString('ru', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -87,9 +87,9 @@ export default function PortfolioList() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 items-stretch">
           {portfolios.map((portfolio) => (
-            <Card key={portfolio.id} className="hover:shadow-xl transition-all duration-300 border-l-4 border-l-blue-500 bg-blue-50" data-testid={`card-portfolio-${portfolio.id}`}>
+            <Card key={portfolio.id} className="hover:shadow-xl transition-all duration-300 border-l-4 border-l-blue-500 bg-blue-50 h-full" data-testid={`card-portfolio-${portfolio.id}`}>
               <CardHeader>
                 <CardTitle className="text-base text-blue-700 font-bold" data-testid={`text-portfolio-name-${portfolio.id}`}>
                   {portfolio.name}
@@ -115,7 +115,7 @@ export default function PortfolioList() {
                   </Link>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm" data-testid={`button-delete-${portfolio.id}`}>
+                      <Button variant="outline" size="sm" className="border-red-500 text-red-600 hover:bg-red-100" data-testid={`button-delete-${portfolio.id}`}>
                         <Trash2 className="h-4 w-4 mr-1" />
                         Удалить
                       </Button>

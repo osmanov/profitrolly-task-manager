@@ -49,7 +49,7 @@ export default function SummaryDisplay({ tasks, portfolioName, startDate }: Summ
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString('ru', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',

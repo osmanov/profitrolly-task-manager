@@ -125,12 +125,31 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
     }
   }, [portfolio, isEditing, setValue]);
   
-  // Clear unsaved changes when component unmounts
+  // Clear unsaved changes when component unmounts or portfolio ID changes
   useEffect(() => {
     return () => {
       setHasUnsavedChanges(false);
     };
-  }, [setHasUnsavedChanges]);
+  }, [setHasUnsavedChanges, portfolioId]);
+  
+  // Reset form when switching from edit to create mode
+  useEffect(() => {
+    if (!isEditing) {
+      // Reset to default values for new portfolio
+      setValue("name", "");
+      setValue("startDate", new Date().toISOString().split('T')[0]);
+      setTasks([{
+        title: "",
+        description: "",
+        team: "frontend",
+        days: 1,
+        parallelGroup: undefined,
+        orderIndex: 0,
+      }]);
+      setIsInitialized(true);
+      setHasUnsavedChanges(false);
+    }
+  }, [isEditing, setValue, setHasUnsavedChanges]);
 
   const addTask = () => {
     setTasks([...tasks, {

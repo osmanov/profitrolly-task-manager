@@ -12,8 +12,8 @@ import TaskBlock from "./TaskBlock";
 import SummaryDisplay from "../calculations/SummaryDisplay";
 import { usePortfolio, useCreatePortfolio, useUpdatePortfolio, useCreateTask } from "@/hooks/usePortfolio";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useUnsavedChangesContext } from "@/contexts/UnsavedChangesContext";
 import type { CreatePortfolioData, CreateTaskData } from "@/types/portfolio";
 
 const portfolioSchema = z.object({
@@ -29,8 +29,8 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
   const [, setLocation] = useLocation();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string>("");
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const { hasUnsavedChanges, setHasUnsavedChanges } = useUnsavedChangesContext();
   
   const markAsChanged = () => {
     if (isInitialized) {
@@ -124,6 +124,13 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
       setIsInitialized(true);
     }
   }, [portfolio, isEditing, setValue]);
+  
+  // Clear unsaved changes when component unmounts
+  useEffect(() => {
+    return () => {
+      setHasUnsavedChanges(false);
+    };
+  }, [setHasUnsavedChanges]);
 
   const addTask = () => {
     setTasks([...tasks, {

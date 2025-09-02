@@ -1,3 +1,4 @@
+import React, { useMemo } from "react";
 import { Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,14 +16,18 @@ export default function SummaryDisplay({ tasks, portfolioName, startDate }: Summ
   const { toast } = useToast();
 
   // Convert CreateTaskData to Task-like objects for calculations
-  const taskData = tasks.map((task, index) => ({
-    ...task,
-    id: `temp-${index}`,
-    portfolioId: "temp",
-    createdAt: new Date().toISOString(),
-  }));
+  // Use useMemo to avoid recalculating on every render
+  const taskData = useMemo(() => 
+    tasks.map((task, index) => ({
+      ...task,
+      id: `temp-${index}`,
+      portfolioId: "temp",
+      createdAt: new Date().toISOString(),
+    })), [tasks]);
 
-  const calculations = calculatePortfolioMetrics(taskData, startDate);
+  const calculations = useMemo(() => 
+    calculatePortfolioMetrics(taskData, startDate), 
+    [taskData, startDate]);
 
   const copyMarkdown = async () => {
     try {

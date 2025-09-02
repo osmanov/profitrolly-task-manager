@@ -36,16 +36,16 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
     <Card className="w-full max-w-md shadow-2xl border-t-4 border-t-blue-600 bg-blue-50" data-testid="login-form">
       <CardHeader className="text-center">
         <CardTitle className="text-3xl font-bold text-blue-700 mb-2">profiTrolly</CardTitle>
-        <p className="text-muted-foreground">Task Decomposition & Risk Calculator</p>
+        <p className="text-muted-foreground">Декомпозиция задач и расчет рисков</p>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div>
-            <Label htmlFor="usernameOrEmail">Username or Email</Label>
+            <Label htmlFor="usernameOrEmail">Логин или Email</Label>
             <Input
               id="usernameOrEmail"
               type="text"
-              placeholder="Enter your username or email"
+              placeholder="Введите логин или email"
               {...register("usernameOrEmail")}
               data-testid="input-username-email"
             />
@@ -55,11 +55,11 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
           </div>
 
           <div>
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Пароль</Label>
             <Input
               id="password"
               type="password"
-              placeholder="Enter your password"
+              placeholder="Введите пароль"
               {...register("password")}
               data-testid="input-password"
             />
@@ -74,7 +74,7 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
             disabled={isLoginPending}
             data-testid="button-login"
           >
-            {isLoginPending ? "Signing In..." : "Sign In"}
+            {isLoginPending ? "Вход..." : "Войти"}
           </Button>
 
           <div className="text-center">
@@ -85,7 +85,7 @@ export default function LoginForm({ onSwitchToRegister }: LoginFormProps) {
               onClick={onSwitchToRegister}
               data-testid="button-switch-register"
             >
-              Don't have an account? Register here
+              Нет аккаунта? Регистрация
             </Button>
           </div>
         </form>

@@ -33,7 +33,7 @@ export default function Header() {
                 }`}
                 data-testid="nav-portfolios"
               >
-                Portfolios
+                Портфолио
               </button>
             </Link>
             {user?.role === "admin" && (
@@ -46,7 +46,7 @@ export default function Header() {
                   }`}
                   data-testid="nav-settings"
                 >
-                  Settings
+                  Настройки
                 </button>
               </Link>
             )}
@@ -65,7 +65,7 @@ export default function Header() {
             data-testid="button-logout"
           >
             <LogOut className="h-4 w-4 mr-2" />
-            Logout
+            Выйти
           </Button>
         </div>
       </div>

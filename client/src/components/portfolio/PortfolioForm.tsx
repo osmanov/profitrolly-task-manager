@@ -195,7 +195,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold" data-testid="text-form-title">
-          {isEditing ? "Edit Portfolio" : "Create New Portfolio"}
+          {isEditing ? "Редактировать Portfolio" : "Создать новое Portfolio"}
         </h2>
         <Button
           variant="ghost"
@@ -212,16 +212,16 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
         <div className="lg:col-span-2">
           <Card className="shadow-xl border-t-4 border-t-blue-600 bg-blue-50">
             <CardHeader className="bg-blue-100">
-              <CardTitle className="text-blue-700 font-bold">Portfolio Details</CardTitle>
+              <CardTitle className="text-blue-700 font-bold">Детали Portfolio</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 {/* Portfolio Name */}
                 <div>
-                  <Label htmlFor="name">Portfolio Name</Label>
+                  <Label htmlFor="name">Название Portfolio</Label>
                   <Input
                     id="name"
-                    placeholder="Enter portfolio name"
+                    placeholder="Введите название портфолио"
                     {...register("name")}
                     data-testid="input-portfolio-name"
                   />
@@ -232,7 +232,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
 
                 {/* Start Date */}
                 <div>
-                  <Label htmlFor="startDate">Start Date</Label>
+                  <Label htmlFor="startDate">Дата начала</Label>
                   <Input
                     id="startDate"
                     type="date"
@@ -247,7 +247,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
                 {/* Tasks Section */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">Tasks</h3>
+                    <h3 className="text-lg font-medium">Задачи</h3>
                     <Button
                       type="button"
                       className="bg-green-600 hover:bg-green-700 text-white"
@@ -256,7 +256,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
                       data-testid="button-add-task"
                     >
                       <Plus className="h-4 w-4 mr-1" />
-                      Add Task
+                      Добавить задачу
                     </Button>
                   </div>
 
@@ -281,8 +281,8 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
                     data-testid="button-save-portfolio"
                   >
                     {(createPortfolio.isPending || updatePortfolio.isPending)
-                      ? "Saving..."
-                      : (isEditing ? "Update Portfolio" : "Save Portfolio")
+                      ? "Сохранение..."
+                      : (isEditing ? "Обновить Portfolio" : "Сохранить Portfolio")
                     }
                   </Button>
                   <Button
@@ -291,7 +291,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
                     onClick={() => setLocation("/portfolios")}
                     data-testid="button-cancel"
                   >
-                    Cancel
+                    Отмена
                   </Button>
                 </div>
               </form>

@@ -40,16 +40,16 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
     <Card className="w-full max-w-md shadow-2xl border-t-4 border-t-blue-600 bg-blue-50" data-testid="register-form">
       <CardHeader className="text-center">
         <CardTitle className="text-3xl font-bold text-blue-700 mb-2">profiTrolly</CardTitle>
-        <p className="text-muted-foreground">Create your account</p>
+        <p className="text-muted-foreground">Создайте ваш аккаунт</p>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div>
-            <Label htmlFor="fullName">Full Name</Label>
+            <Label htmlFor="fullName">Полное имя</Label>
             <Input
               id="fullName"
               type="text"
-              placeholder="Enter your full name"
+              placeholder="Введите ваше полное имя"
               {...register("fullName")}
               data-testid="input-full-name"
             />
@@ -59,11 +59,11 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
           </div>
 
           <div>
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="username">Логин</Label>
             <Input
               id="username"
               type="text"
-              placeholder="Choose a username"
+              placeholder="Выберите логин"
               {...register("username")}
               data-testid="input-username"
             />
@@ -77,7 +77,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
             <Input
               id="email"
               type="email"
-              placeholder="Enter your email"
+              placeholder="Введите ваш email"
               {...register("email")}
               data-testid="input-email"
             />
@@ -87,11 +87,11 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
           </div>
 
           <div>
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Пароль</Label>
             <Input
               id="password"
               type="password"
-              placeholder="Create a strong password"
+              placeholder="Создайте надёжный пароль"
               {...register("password")}
               data-testid="input-password"
             />
@@ -106,7 +106,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
             disabled={isRegisterPending}
             data-testid="button-register"
           >
-            {isRegisterPending ? "Creating Account..." : "Create Account"}
+            {isRegisterPending ? "Создание аккаунта..." : "Создать аккаунт"}
           </Button>
 
           <div className="text-center">
@@ -117,7 +117,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
               onClick={onSwitchToLogin}
               data-testid="button-switch-login"
             >
-              Already have an account? Sign in here
+              Уже есть аккаунт? Войти
             </Button>
           </div>
         </form>

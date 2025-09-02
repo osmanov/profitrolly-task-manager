@@ -105,21 +105,21 @@ export default function SystemSettings() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold" data-testid="text-settings-title">System Settings</h2>
-        <Badge variant="secondary" data-testid="badge-admin-only">Admin Only</Badge>
+        <h2 className="text-xl font-semibold" data-testid="text-settings-title">Настройки системы</h2>
+        <Badge variant="secondary" data-testid="badge-admin-only">Только админ</Badge>
       </div>
 
       <div className="grid gap-6">
         {/* Maximum Days Setting */}
         <Card>
           <CardHeader>
-            <CardTitle>Task Limits</CardTitle>
+            <CardTitle>Ограничения задач</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)}>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="maxDaysPerTask">Maximum Days per Task</Label>
+                  <Label htmlFor="maxDaysPerTask">Максимум дней на задачу</Label>
                   <Input
                     id="maxDaysPerTask"
                     type="number"
@@ -132,7 +132,7 @@ export default function SystemSettings() {
                     <p className="text-sm text-destructive mt-1">{errors.maxDaysPerTask.message}</p>
                   )}
                   <p className="text-xs text-muted-foreground mt-1">
-                    Maximum number of days allowed per task (1-10)
+                    Максимальное количество дней на задачу (1-10)
                   </p>
                 </div>
                 <div className="flex items-end">
@@ -142,7 +142,7 @@ export default function SystemSettings() {
                     disabled={updateSettings.isPending}
                     data-testid="button-update-settings"
                   >
-                    {updateSettings.isPending ? "Updating..." : "Update Setting"}
+                    {updateSettings.isPending ? "Обновление..." : "Обновить"}
                   </Button>
                 </div>
               </div>
@@ -153,15 +153,15 @@ export default function SystemSettings() {
         {/* Risk Calculation Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Risk Calculation Table</CardTitle>
+            <CardTitle>Таблица расчёта рисков</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full text-sm" data-testid="risk-table">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left py-2 font-medium">Total Days</th>
-                    <th className="text-left py-2 font-medium">Risk Days</th>
+                    <th className="text-left py-2 font-medium">Общие дни</th>
+                    <th className="text-left py-2 font-medium">Рисковые дни</th>
                   </tr>
                 </thead>
                 <tbody className="text-muted-foreground">
@@ -180,16 +180,16 @@ export default function SystemSettings() {
         {/* System Information */}
         <Card>
           <CardHeader>
-            <CardTitle>System Information</CardTitle>
+            <CardTitle>Информация о системе</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="text-muted-foreground">Application Version</p>
+                <p className="text-muted-foreground">Версия приложения</p>
                 <p className="font-medium" data-testid="text-app-version">v1.0.0</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Last Updated</p>
+                <p className="text-muted-foreground">Последнее обновление</p>
                 <p className="font-medium" data-testid="text-last-updated">
                   {new Date().toLocaleDateString('en-US', {
                     year: 'numeric',

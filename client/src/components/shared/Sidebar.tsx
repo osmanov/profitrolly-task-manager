@@ -29,14 +29,14 @@ export default function Sidebar() {
         <Link href="/portfolios">
           <button className={linkClass("/portfolios")} data-testid="sidebar-portfolios">
             <Briefcase className="h-4 w-4 mr-3" />
-            My Portfolios
+            Мои Портфолио
           </button>
         </Link>
         
         <Link href="/portfolios/new">
           <button className={linkClass("/portfolios/new")} data-testid="sidebar-new-portfolio">
             <Plus className="h-4 w-4 mr-3" />
-            New Portfolio
+            Новое Portfolio
           </button>
         </Link>
 
@@ -46,7 +46,7 @@ export default function Sidebar() {
             <Link href="/settings">
               <button className={linkClass("/settings")} data-testid="sidebar-settings">
                 <Settings className="h-4 w-4 mr-3" />
-                System Settings
+                Настройки системы
               </button>
             </Link>
           </>

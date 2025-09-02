@@ -59,17 +59,17 @@ export default function SummaryDisplay({ tasks, portfolioName, startDate }: Summ
   return (
     <Card className="sticky top-6 shadow-xl border-l-4 border-l-teal-500 bg-teal-50" data-testid="summary-display">
       <CardHeader className="bg-teal-100">
-        <CardTitle className="text-teal-700 font-bold">Calculations</CardTitle>
+        <CardTitle className="text-teal-700 font-bold">Расчёты</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Team Distribution */}
         <div className="space-y-3">
-          <h4 className="text-sm font-medium text-muted-foreground">Team Distribution</h4>
+          <h4 className="text-sm font-medium text-muted-foreground">Распределение по командам</h4>
           <div className="space-y-2">
             {Object.entries(calculations.teamDistribution).map(([team, days]) => (
               <div key={team} className="flex justify-between text-sm" data-testid={`team-${team}-days`}>
                 <span className="capitalize">{team}</span>
-                <span className="font-medium">{days} days</span>
+                <span className="font-medium">{days} дней</span>
               </div>
             ))}
           </div>
@@ -78,34 +78,34 @@ export default function SummaryDisplay({ tasks, portfolioName, startDate }: Summ
         {/* Summary Metrics */}
         <div className="space-y-3 p-3 bg-muted rounded-md">
           <div className="flex justify-between text-sm">
-            <span>Total Days:</span>
-            <span className="font-semibold" data-testid="text-total-days">{calculations.totalDays} days</span>
+            <span>Общие дни:</span>
+            <span className="font-semibold" data-testid="text-total-days">{calculations.totalDays} дней</span>
           </div>
           <div className="flex justify-between text-sm">
             <span>Story Points:</span>
             <span className="font-semibold" data-testid="text-story-points">{calculations.storyPoints} points</span>
           </div>
           <div className="flex justify-between text-sm text-orange-600 font-bold">
-            <span>Risk Days:</span>
-            <span className="font-semibold" data-testid="text-risk-days">+{calculations.riskDays} days</span>
+            <span>Рисковые дни:</span>
+            <span className="font-semibold" data-testid="text-risk-days">+{calculations.riskDays} дней</span>
           </div>
           <div className="flex justify-between text-sm border-t border-border pt-2">
-            <span>With Risks:</span>
-            <span className="font-semibold" data-testid="text-total-with-risks">{calculations.totalWithRisks} days</span>
+            <span>С рисками:</span>
+            <span className="font-semibold" data-testid="text-total-with-risks">{calculations.totalWithRisks} дней</span>
           </div>
         </div>
 
         {/* Date Calculations */}
         {startDate && (
           <div className="space-y-3">
-            <h4 className="text-sm font-medium text-muted-foreground">Timeline</h4>
+            <h4 className="text-sm font-medium text-muted-foreground">Временная линия</h4>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span>Start Date:</span>
+                <span>Дата начала:</span>
                 <span className="font-medium" data-testid="text-start-date">{formatDate(startDate)}</span>
               </div>
               <div className="flex justify-between">
-                <span>End Date:</span>
+                <span>Дата окончания:</span>
                 <span className="font-medium" data-testid="text-end-date">{formatDate(calculations.endDate)}</span>
               </div>
             </div>
@@ -120,7 +120,7 @@ export default function SummaryDisplay({ tasks, portfolioName, startDate }: Summ
           data-testid="button-copy-markdown"
         >
           <Copy className="h-4 w-4 mr-2 inline" />
-          Copy Jira Summary
+          Скопировать Jira Summary
         </button>
       </CardContent>
     </Card>

@@ -15,9 +15,9 @@ interface TaskBlockProps {
 }
 
 const TEAMS = [
-  { value: "frontend", label: "Frontend" },
-  { value: "backend", label: "Backend" },
-  { value: "testing", label: "Testing" },
+  { value: "frontend", label: "Фронтенд" },
+  { value: "backend", label: "Бэкенд" },
+  { value: "testing", label: "Тестирование" },
 ];
 
 export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove }: TaskBlockProps) {
@@ -47,7 +47,7 @@ export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove }
     <div className={`rounded-lg p-4 space-y-4 transition-all hover:shadow-sm ${getTeamColor(task.team)}`} data-testid={`task-block-${index}`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h4 className="font-medium text-sm text-foreground">Task {index + 1}</h4>
+          <h4 className="font-medium text-sm text-foreground">Задача {index + 1}</h4>
           <span className={`px-2 py-1 text-xs font-medium rounded-full ${getTeamBadgeColor(task.team)}`}>
             {task.team.charAt(0).toUpperCase() + task.team.slice(1)}
           </span>
@@ -68,10 +68,10 @@ export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove }
 
       <div className="grid md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor={`title-${index}`}>Task Title</Label>
+          <Label htmlFor={`title-${index}`}>Название задачи</Label>
           <Input
             id={`title-${index}`}
-            placeholder="Brief task title"
+            placeholder="Краткое название задачи"
             value={task.title}
             onChange={(e) => handleChange("title", e.target.value)}
             data-testid={`input-task-title-${index}`}
@@ -80,7 +80,7 @@ export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove }
 
         <div className="grid grid-cols-3 gap-2">
           <div>
-            <Label htmlFor={`team-${index}`}>Team</Label>
+            <Label htmlFor={`team-${index}`}>Команда</Label>
             <Select
               value={task.team}
               onValueChange={(value) => handleChange("team", value)}
@@ -99,7 +99,7 @@ export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove }
           </div>
 
           <div>
-            <Label htmlFor={`days-${index}`}>Days</Label>
+            <Label htmlFor={`days-${index}`}>Дни</Label>
             <Input
               id={`days-${index}`}
               type="number"
@@ -113,12 +113,12 @@ export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove }
 
           <div>
             <Label htmlFor={`parallel-group-${index}`}>
-              Parallel Group
-              <span className="text-xs text-muted-foreground ml-1">(optional)</span>
+              Параллельная группа
+              <span className="text-xs text-muted-foreground ml-1">(опционально)</span>
             </Label>
             <Input
               id={`parallel-group-${index}`}
-              placeholder="e.g., group-1"
+              placeholder="напр., группа-1"
               value={task.parallelGroup || ""}
               onChange={(e) => handleChange("parallelGroup", e.target.value || undefined)}
               data-testid={`input-parallel-group-${index}`}
@@ -128,11 +128,11 @@ export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove }
       </div>
 
       <div>
-        <Label htmlFor={`description-${index}`}>Description</Label>
+        <Label htmlFor={`description-${index}`}>Описание</Label>
         <Textarea
           id={`description-${index}`}
           rows={3}
-          placeholder="Detailed task description"
+          placeholder="Подробное описание задачи"
           value={task.description}
           onChange={(e) => handleChange("description", e.target.value)}
           data-testid={`textarea-task-description-${index}`}

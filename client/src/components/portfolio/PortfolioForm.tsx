@@ -210,8 +210,8 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Form Section */}
         <div className="lg:col-span-2">
-          <Card className="shadow-xl border-t-4 border-t-blue-600 bg-gradient-to-b from-blue-50 to-white">
-            <CardHeader className="bg-gradient-to-r from-blue-100 to-teal-100">
+          <Card className="shadow-xl border-t-4 border-t-blue-600 bg-blue-50">
+            <CardHeader className="bg-blue-100">
               <CardTitle className="text-blue-700 font-bold">Portfolio Details</CardTitle>
             </CardHeader>
             <CardContent>

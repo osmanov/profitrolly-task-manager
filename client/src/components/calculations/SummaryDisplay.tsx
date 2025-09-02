@@ -36,6 +36,7 @@ export default function SummaryDisplay({ tasks, portfolioName, startDate }: Summ
       toast({
         title: "Success",
         description: "Markdown copied to clipboard!",
+        className: "bg-green-100 border-green-500 text-green-800",
       });
     } catch (error) {
       toast({
@@ -56,9 +57,9 @@ export default function SummaryDisplay({ tasks, portfolioName, startDate }: Summ
   };
 
   return (
-    <Card className="sticky top-6 shadow-xl border-l-4 border-l-teal-500 bg-gradient-to-b from-teal-50 to-white" data-testid="summary-display">
-      <CardHeader className="bg-gradient-to-r from-blue-100 to-teal-100">
-        <CardTitle className="text-blue-700 font-bold">Calculations</CardTitle>
+    <Card className="sticky top-6 shadow-xl border-l-4 border-l-teal-500 bg-teal-50" data-testid="summary-display">
+      <CardHeader className="bg-teal-100">
+        <CardTitle className="text-teal-700 font-bold">Calculations</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Team Distribution */}

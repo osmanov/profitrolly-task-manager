@@ -89,7 +89,7 @@ export default function PortfolioList() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {portfolios.map((portfolio) => (
-            <Card key={portfolio.id} className="hover:shadow-xl transition-all duration-300 border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50 to-white" data-testid={`card-portfolio-${portfolio.id}`}>
+            <Card key={portfolio.id} className="hover:shadow-xl transition-all duration-300 border-l-4 border-l-blue-500 bg-blue-50" data-testid={`card-portfolio-${portfolio.id}`}>
               <CardHeader>
                 <CardTitle className="text-base text-blue-700 font-bold" data-testid={`text-portfolio-name-${portfolio.id}`}>
                   {portfolio.name}

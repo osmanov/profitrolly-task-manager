@@ -15,7 +15,7 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-gradient-to-r from-blue-600 to-teal-500 border-b border-blue-300 px-6 py-4 shadow-lg" data-testid="header">
+    <header className="bg-blue-600 border-b border-blue-300 px-6 py-4 shadow-lg" data-testid="header">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Link href="/portfolios">

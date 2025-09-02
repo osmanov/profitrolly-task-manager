@@ -120,18 +120,18 @@ export default function PortfolioList() {
                         Удалить
                       </Button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent>
+                    <AlertDialogContent className="bg-white dark:bg-white border border-gray-200 shadow-xl">
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Удалить Portfolio</AlertDialogTitle>
-                        <AlertDialogDescription>
+                        <AlertDialogTitle className="text-gray-900">Удалить Portfolio</AlertDialogTitle>
+                        <AlertDialogDescription className="text-gray-600">
                           Вы уверены, что хотите удалить "{portfolio.name}"? Это действие нельзя будет отменить.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Отмена</AlertDialogCancel>
+                        <AlertDialogCancel className="bg-gray-100 text-gray-900 border-gray-300 hover:bg-gray-200">Отмена</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => handleDelete(portfolio.id)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          className="bg-red-600 text-white hover:bg-red-700"
                         >
                           Удалить
                         </AlertDialogAction>

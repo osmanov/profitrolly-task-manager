@@ -64,7 +64,7 @@ export default function PortfolioList() {
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold" data-testid="text-portfolios-title">My Portfolios</h2>
         <Link href="/portfolios/new">
-          <Button className="btn-primary shadow-md" data-testid="button-new-portfolio">
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg" data-testid="button-new-portfolio">
             <Plus className="h-4 w-4 mr-2" />
             New Portfolio
           </Button>
@@ -78,7 +78,7 @@ export default function PortfolioList() {
               <h3 className="text-lg font-medium mb-2">No portfolios yet</h3>
               <p className="text-muted-foreground mb-4">Create your first portfolio to get started</p>
               <Link href="/portfolios/new">
-                <Button className="btn-primary" data-testid="button-create-first-portfolio">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white" data-testid="button-create-first-portfolio">
                   <Plus className="h-4 w-4 mr-2" />
                   Create Portfolio
                 </Button>
@@ -89,9 +89,9 @@ export default function PortfolioList() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {portfolios.map((portfolio) => (
-            <Card key={portfolio.id} className="card-enhanced border-l-4 border-l-primary/30" data-testid={`card-portfolio-${portfolio.id}`}>
+            <Card key={portfolio.id} className="hover:shadow-xl transition-all duration-300 border-l-4 border-l-blue-500 bg-gradient-to-r from-blue-50 to-white" data-testid={`card-portfolio-${portfolio.id}`}>
               <CardHeader>
-                <CardTitle className="text-base text-primary font-semibold" data-testid={`text-portfolio-name-${portfolio.id}`}>
+                <CardTitle className="text-base text-blue-700 font-bold" data-testid={`text-portfolio-name-${portfolio.id}`}>
                   {portfolio.name}
                 </CardTitle>
               </CardHeader>
@@ -108,7 +108,7 @@ export default function PortfolioList() {
                 </div>
                 <div className="flex space-x-2">
                   <Link href={`/portfolios/${portfolio.id}`}>
-                    <Button variant="outline" size="sm" className="btn-secondary border-primary/30 hover:bg-primary/10" data-testid={`button-edit-${portfolio.id}`}>
+                    <Button variant="outline" size="sm" className="border-blue-500 text-blue-600 hover:bg-blue-100" data-testid={`button-edit-${portfolio.id}`}>
                       <Edit className="h-4 w-4 mr-1" />
                       Edit
                     </Button>

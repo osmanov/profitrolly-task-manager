@@ -210,9 +210,9 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Form Section */}
         <div className="lg:col-span-2">
-          <Card className="card-enhanced">
-            <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
-              <CardTitle className="text-primary font-bold">Portfolio Details</CardTitle>
+          <Card className="shadow-xl border-t-4 border-t-blue-600 bg-gradient-to-b from-blue-50 to-white">
+            <CardHeader className="bg-gradient-to-r from-blue-100 to-teal-100">
+              <CardTitle className="text-blue-700 font-bold">Portfolio Details</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -250,7 +250,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
                     <h3 className="text-lg font-medium">Tasks</h3>
                     <Button
                       type="button"
-                      className="btn-secondary border-primary/30 hover:bg-primary/10"
+                      className="bg-green-600 hover:bg-green-700 text-white"
                       size="sm"
                       onClick={addTask}
                       data-testid="button-add-task"
@@ -276,7 +276,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
                 <div className="flex space-x-4 pt-6 border-t border-border">
                   <Button
                     type="submit"
-                    className="btn-primary shadow-md"
+                    className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
                     disabled={createPortfolio.isPending || updatePortfolio.isPending}
                     data-testid="button-save-portfolio"
                   >
@@ -287,7 +287,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
                   </Button>
                   <Button
                     type="button"
-                    className="btn-secondary"
+                    className="bg-gray-500 hover:bg-gray-600 text-white"
                     onClick={() => setLocation("/portfolios")}
                     data-testid="button-cancel"
                   >

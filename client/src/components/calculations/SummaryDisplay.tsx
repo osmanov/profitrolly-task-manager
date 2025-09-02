@@ -56,9 +56,9 @@ export default function SummaryDisplay({ tasks, portfolioName, startDate }: Summ
   };
 
   return (
-    <Card className="sticky top-6 card-enhanced border-l-4 border-l-accent" data-testid="summary-display">
-      <CardHeader className="bg-gradient-to-r from-primary/5 to-accent/5">
-        <CardTitle className="text-primary font-bold">Calculations</CardTitle>
+    <Card className="sticky top-6 shadow-xl border-l-4 border-l-teal-500 bg-gradient-to-b from-teal-50 to-white" data-testid="summary-display">
+      <CardHeader className="bg-gradient-to-r from-blue-100 to-teal-100">
+        <CardTitle className="text-blue-700 font-bold">Calculations</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Team Distribution */}
@@ -84,7 +84,7 @@ export default function SummaryDisplay({ tasks, portfolioName, startDate }: Summ
             <span>Story Points:</span>
             <span className="font-semibold" data-testid="text-story-points">{calculations.storyPoints} points</span>
           </div>
-          <div className="flex justify-between text-sm text-warning font-medium">
+          <div className="flex justify-between text-sm text-orange-600 font-bold">
             <span>Risk Days:</span>
             <span className="font-semibold" data-testid="text-risk-days">+{calculations.riskDays} days</span>
           </div>
@@ -114,7 +114,7 @@ export default function SummaryDisplay({ tasks, portfolioName, startDate }: Summ
         {/* Export Button */}
         <Button
           onClick={copyMarkdown}
-          className="w-full btn-primary"
+          className="w-full bg-teal-600 hover:bg-teal-700 text-white shadow-lg"
           disabled={!portfolioName || tasks.length === 0}
           data-testid="button-copy-markdown"
         >

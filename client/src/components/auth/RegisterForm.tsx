@@ -37,9 +37,9 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-md card-enhanced shadow-xl" data-testid="register-form">
+    <Card className="w-full max-w-md shadow-2xl border-t-4 border-t-blue-600 bg-gradient-to-b from-blue-50 to-white" data-testid="register-form">
       <CardHeader className="text-center">
-        <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">profiTrolly</CardTitle>
+        <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent mb-2">profiTrolly</CardTitle>
         <p className="text-muted-foreground">Create your account</p>
       </CardHeader>
       <CardContent>
@@ -102,7 +102,7 @@ export default function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
 
           <Button
             type="submit"
-            className="w-full btn-primary shadow-md"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
             disabled={isRegisterPending}
             data-testid="button-register"
           >

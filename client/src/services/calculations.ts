@@ -13,7 +13,7 @@ export const calculateRiskDays = (totalDays: number): number => {
 };
 
 export const calculateStoryPoints = (totalDays: number): number => {
-  return Math.round(totalDays / 2);
+  return totalDays / 2;
 };
 
 export const calculateTeamDistribution = (tasks: Task[]): TeamDistribution => {

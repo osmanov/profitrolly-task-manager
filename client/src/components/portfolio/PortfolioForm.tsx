@@ -70,6 +70,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
           description: task.description,
           team: task.team,
           days: task.days,
+          parallelGroup: task.parallelGroup,
           orderIndex: task.orderIndex,
         })));
       }
@@ -103,7 +104,30 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
     try {
       if (isEditing && portfolioId) {
         await updatePortfolio.mutateAsync({ id: portfolioId, data });
-        // TODO: Update tasks for editing mode
+        
+        // Update tasks for editing mode
+        // First, delete existing tasks
+        if (portfolio?.tasks) {
+          for (const existingTask of portfolio.tasks) {
+            await fetch(`/api/tasks/${existingTask.id}`, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              },
+            });
+          }
+        }
+        
+        // Then create new tasks
+        for (const task of tasks) {
+          if (task.title && task.description) { // Only create tasks with content
+            await createTask.mutateAsync({
+              portfolioId: portfolioId,
+              data: task
+            });
+          }
+        }
+        
         setLocation("/portfolios");
       } else {
         const newPortfolio = await createPortfolio.mutateAsync(data);

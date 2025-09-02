@@ -1,14 +1,13 @@
 import type { Task, CalculationResults, TeamDistribution } from "@/types/portfolio";
 
 export const calculateRiskDays = (totalDays: number): number => {
-  if (totalDays === 2) return 1;
+  if (totalDays >= 1 && totalDays <= 2) return 1;
   if (totalDays >= 3 && totalDays <= 7) return 2;
   if (totalDays >= 8 && totalDays <= 12) return 3;
   if (totalDays >= 13 && totalDays <= 17) return 4;
   if (totalDays >= 18 && totalDays <= 22) return 5;
   if (totalDays >= 23 && totalDays <= 27) return 6;
-  if (totalDays >= 28 && totalDays <= 30) return 7;
-  if (totalDays > 30) return 7;
+  if (totalDays >= 28) return 7;
   return 0;
 };
 

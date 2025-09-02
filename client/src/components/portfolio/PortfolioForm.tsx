@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { X, Plus } from "lucide-react";
 import TaskBlock from "./TaskBlock";
 import SummaryDisplay from "../calculations/SummaryDisplay";
-import { usePortfolio, useCreatePortfolio, useUpdatePortfolio } from "@/hooks/usePortfolio";
+import { usePortfolio, useCreatePortfolio, useUpdatePortfolio, useCreateTask } from "@/hooks/usePortfolio";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { CreatePortfolioData, CreateTaskData } from "@/types/portfolio";
 
@@ -39,6 +39,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
   const { portfolio, isLoading: isLoadingPortfolio } = usePortfolio(portfolioId || "");
   const createPortfolio = useCreatePortfolio();
   const updatePortfolio = useUpdatePortfolio();
+  const createTask = useCreateTask();
 
   const {
     register,
@@ -100,11 +101,21 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
     try {
       if (isEditing && portfolioId) {
         await updatePortfolio.mutateAsync({ id: portfolioId, data });
-        // Note: In a real app, you'd also update tasks here
+        // TODO: Update tasks for editing mode
         setLocation("/portfolios");
       } else {
         const newPortfolio = await createPortfolio.mutateAsync(data);
-        // Note: In a real app, you'd create tasks after portfolio creation
+        
+        // Create all tasks after portfolio creation
+        for (const task of tasks) {
+          if (task.title && task.description) { // Only create tasks with content
+            await createTask.mutateAsync({
+              portfolioId: newPortfolio.id,
+              data: task
+            });
+          }
+        }
+        
         setLocation("/portfolios");
       }
     } catch (error) {

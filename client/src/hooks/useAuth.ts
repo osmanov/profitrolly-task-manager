@@ -47,9 +47,7 @@ export const useAuth = () => {
 
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterData): Promise<AuthResponse> => {
-      console.log("Sending registration data:", data);
       const response = await api.auth.register(data);
-      console.log("Registration response:", response);
       return response.json();
     },
     onSuccess: (data) => {

@@ -4,77 +4,88 @@
 @tailwind utilities;
 
 :root {
-  --background: hsl(210, 20%, 98%);
-  --foreground: hsl(214, 32%, 17%);
+  /* Jira/Confluence color scheme */
+  --background: hsl(246, 100%, 99%); /* Jira's very light blue-white */
+  --foreground: hsl(217, 19%, 27%); /* Jira's dark blue-gray text */
   --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(214, 32%, 17%);
+  --card-foreground: hsl(217, 19%, 27%);
   --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(214, 32%, 17%);
-  --primary: hsl(214, 100%, 40%);
+  --popover-foreground: hsl(217, 19%, 27%);
+  --primary: hsl(217, 91%, 49%); /* Jira's signature blue */
   --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(210, 40%, 96%);
-  --secondary-foreground: hsl(214, 32%, 17%);
-  --muted: hsl(210, 40%, 96%);
-  --muted-foreground: hsl(215, 16%, 47%);
-  --accent: hsl(210, 40%, 96%);
-  --accent-foreground: hsl(214, 32%, 17%);
-  --destructive: hsl(0, 84%, 60%);
+  --secondary: hsl(212, 45%, 89%); /* Light blue-gray */
+  --secondary-foreground: hsl(217, 19%, 27%);
+  --muted: hsl(218, 18%, 94%); /* Very light gray-blue */
+  --muted-foreground: hsl(217, 12%, 63%); /* Medium gray */
+  --accent: hsl(197, 71%, 52%); /* Confluence teal */
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(358, 75%, 59%); /* Jira red */
   --destructive-foreground: hsl(0, 0%, 100%);
-  --border: hsl(214, 32%, 91%);
-  --input: hsl(214, 32%, 91%);
-  --ring: hsl(214, 100%, 40%);
-  --chart-1: hsl(214, 100%, 40%);
-  --chart-2: hsl(159, 100%, 36%);
-  --chart-3: hsl(42, 93%, 56%);
-  --chart-4: hsl(147, 79%, 42%);
-  --chart-5: hsl(341, 75%, 51%);
-  --sidebar: hsl(210, 40%, 96%);
-  --sidebar-foreground: hsl(214, 32%, 17%);
-  --sidebar-primary: hsl(214, 100%, 40%);
+  --warning: hsl(42, 100%, 55%); /* Jira orange */
+  --success: hsl(121, 47%, 48%); /* Jira green */
+  --border: hsl(214, 18%, 88%); /* Light border */
+  --input: hsl(214, 18%, 88%);
+  --ring: hsl(217, 91%, 49%);
+  --chart-1: hsl(217, 91%, 49%); /* Primary blue */
+  --chart-2: hsl(121, 47%, 48%); /* Green */
+  --chart-3: hsl(42, 100%, 55%); /* Orange */
+  --chart-4: hsl(262, 83%, 58%); /* Purple */
+  --chart-5: hsl(358, 75%, 59%); /* Red */
+  --sidebar: hsl(218, 18%, 94%);
+  --sidebar-foreground: hsl(217, 19%, 27%);
+  --sidebar-primary: hsl(217, 91%, 49%);
   --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: hsl(210, 40%, 96%);
-  --sidebar-accent-foreground: hsl(214, 32%, 17%);
-  --sidebar-border: hsl(214, 32%, 91%);
-  --sidebar-ring: hsl(214, 100%, 40%);
+  --sidebar-accent: hsl(212, 45%, 89%);
+  --sidebar-accent-foreground: hsl(217, 19%, 27%);
+  --sidebar-border: hsl(214, 18%, 88%);
+  --sidebar-ring: hsl(217, 91%, 49%);
   --font-sans: Inter, system-ui, sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
-  --radius: 8px;
+  --radius: 6px; /* Jira's subtle border radius */
+  
+  /* Team-specific colors */
+  --team-frontend: hsl(262, 83%, 58%); /* Purple */
+  --team-backend: hsl(25, 95%, 53%); /* Orange */
+  --team-testing: hsl(142, 71%, 45%); /* Green */
 }
 
 .dark {
-  --background: hsl(214, 32%, 7%);
-  --foreground: hsl(210, 40%, 96%);
-  --card: hsl(214, 32%, 10%);
-  --card-foreground: hsl(210, 40%, 96%);
-  --popover: hsl(214, 32%, 10%);
-  --popover-foreground: hsl(210, 40%, 96%);
-  --primary: hsl(214, 100%, 50%);
+  /* Dark theme for Jira/Confluence style */
+  --background: hsl(215, 28%, 17%); /* Dark blue-gray */
+  --foreground: hsl(218, 11%, 65%); /* Light gray text */
+  --card: hsl(215, 32%, 21%); /* Slightly lighter dark */
+  --card-foreground: hsl(218, 11%, 65%);
+  --popover: hsl(215, 32%, 21%);
+  --popover-foreground: hsl(218, 11%, 65%);
+  --primary: hsl(206, 100%, 50%); /* Bright blue */
   --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(214, 32%, 15%);
-  --secondary-foreground: hsl(210, 40%, 96%);
-  --muted: hsl(214, 32%, 15%);
-  --muted-foreground: hsl(215, 16%, 60%);
-  --accent: hsl(214, 32%, 15%);
-  --accent-foreground: hsl(210, 40%, 96%);
-  --destructive: hsl(0, 84%, 60%);
+  --secondary: hsl(215, 25%, 27%); /* Dark gray-blue */
+  --secondary-foreground: hsl(218, 11%, 65%);
+  --muted: hsl(215, 25%, 27%);
+  --muted-foreground: hsl(217, 9%, 45%); /* Darker medium gray */
+  --accent: hsl(180, 100%, 50%); /* Bright teal */
+  --accent-foreground: hsl(215, 28%, 17%);
+  --destructive: hsl(0, 91%, 71%); /* Bright red */
   --destructive-foreground: hsl(0, 0%, 100%);
-  --border: hsl(214, 32%, 20%);
-  --input: hsl(214, 32%, 20%);
-  --ring: hsl(214, 100%, 50%);
-  --chart-1: hsl(214, 100%, 50%);
-  --chart-2: hsl(159, 100%, 36%);
-  --chart-3: hsl(42, 93%, 56%);
-  --chart-4: hsl(147, 79%, 42%);
-  --chart-5: hsl(341, 75%, 51%);
-  --sidebar: hsl(214, 32%, 10%);
-  --sidebar-foreground: hsl(210, 40%, 96%);
-  --sidebar-primary: hsl(214, 100%, 50%);
+  --warning: hsl(35, 100%, 50%); /* Bright orange */
+  --success: hsl(134, 61%, 41%); /* Bright green */
+  --border: hsl(215, 25%, 27%);
+  --input: hsl(215, 25%, 27%);
+  --ring: hsl(206, 100%, 50%);
+  --chart-1: hsl(206, 100%, 50%); /* Primary blue */
+  --chart-2: hsl(134, 61%, 41%); /* Green */
+  --chart-3: hsl(35, 100%, 50%); /* Orange */
+  --chart-4: hsl(262, 83%, 58%); /* Purple */
+  --chart-5: hsl(0, 91%, 71%); /* Red */
+  --sidebar: hsl(215, 32%, 21%);
+  --sidebar-foreground: hsl(218, 11%, 65%);
+  --sidebar-primary: hsl(206, 100%, 50%);
   --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: hsl(214, 32%, 15%);
-  --sidebar-accent-foreground: hsl(210, 40%, 96%);
-  --sidebar-border: hsl(214, 32%, 20%);
-  --sidebar-ring: hsl(214, 100%, 50%);
+  --sidebar-accent: hsl(215, 25%, 27%);
+  --sidebar-accent-foreground: hsl(218, 11%, 65%);
+  --sidebar-border: hsl(215, 25%, 27%);
+  --sidebar-ring: hsl(206, 100%, 50%);
 }
 
 @layer base {

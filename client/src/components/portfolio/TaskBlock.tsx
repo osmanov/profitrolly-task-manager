@@ -25,10 +25,33 @@ export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove }
     onUpdate(index, { ...task, [field]: value });
   };
 
+  const getTeamColor = (team: string) => {
+    switch (team) {
+      case 'frontend': return 'border-l-4 border-l-purple-500 bg-purple-50 dark:bg-purple-950/20';
+      case 'backend': return 'border-l-4 border-l-orange-500 bg-orange-50 dark:bg-orange-950/20';
+      case 'testing': return 'border-l-4 border-l-green-500 bg-green-50 dark:bg-green-950/20';
+      default: return 'border-l-4 border-l-primary bg-muted';
+    }
+  };
+
+  const getTeamBadgeColor = (team: string) => {
+    switch (team) {
+      case 'frontend': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300';
+      case 'backend': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300';
+      case 'testing': return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300';
+      default: return 'bg-secondary text-secondary-foreground';
+    }
+  };
+
   return (
-    <div className="border border-border rounded-lg p-4 space-y-4" data-testid={`task-block-${index}`}>
+    <div className={`rounded-lg p-4 space-y-4 transition-all hover:shadow-sm ${getTeamColor(task.team)}`} data-testid={`task-block-${index}`}>
       <div className="flex items-center justify-between">
-        <h4 className="font-medium text-sm text-muted-foreground">Task {index + 1}</h4>
+        <div className="flex items-center gap-2">
+          <h4 className="font-medium text-sm text-foreground">Task {index + 1}</h4>
+          <span className={`px-2 py-1 text-xs font-medium rounded-full ${getTeamBadgeColor(task.team)}`}>
+            {task.team.charAt(0).toUpperCase() + task.team.slice(1)}
+          </span>
+        </div>
         {canRemove && (
           <Button
             type="button"

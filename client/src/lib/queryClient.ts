@@ -23,15 +23,11 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  console.log(`Making ${method} request to ${url}`, data);
-  
   const res = await fetch(url, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
   });
-
-  console.log(`Response status: ${res.status}`, res);
   await throwIfResNotOk(res);
   return res;
 }

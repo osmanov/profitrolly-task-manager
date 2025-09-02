@@ -12,6 +12,8 @@ import TaskBlock from "./TaskBlock";
 import SummaryDisplay from "../calculations/SummaryDisplay";
 import { usePortfolio, useCreatePortfolio, useUpdatePortfolio, useCreateTask } from "@/hooks/usePortfolio";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useUnsavedChanges } from "@/hooks/useUnsavedChanges";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type { CreatePortfolioData, CreateTaskData } from "@/types/portfolio";
 
 const portfolioSchema = z.object({
@@ -25,6 +27,9 @@ interface PortfolioFormProps {
 
 export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
   const [, setLocation] = useLocation();
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string>("");
+  const { hasUnsavedChanges, markAsChanged, markAsSaved } = useUnsavedChanges();
   const [tasks, setTasks] = useState<CreateTaskData[]>([
     {
       title: "",
@@ -58,6 +63,32 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
 
   const watchedValues = watch();
 
+  // Track form changes
+  useEffect(() => {
+    const subscription = watch((value, { name, type }) => {
+      if (type === 'change' && name) {
+        markAsChanged();
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, markAsChanged]);
+
+  const handleNavigateWithConfirmation = (path: string) => {
+    if (hasUnsavedChanges) {
+      setPendingNavigation(path);
+      setShowConfirmDialog(true);
+    } else {
+      setLocation(path);
+    }
+  };
+
+  const handleConfirmNavigation = () => {
+    markAsSaved();
+    setLocation(pendingNavigation);
+    setShowConfirmDialog(false);
+    setPendingNavigation("");
+  };
+
   // Load portfolio data for editing
   useEffect(() => {
     if (isEditing && portfolio) {
@@ -86,11 +117,13 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
       parallelGroup: undefined,
       orderIndex: tasks.length,
     }]);
+    markAsChanged();
   };
 
   const removeTask = (index: number) => {
     if (tasks.length > 1) {
       setTasks(tasks.filter((_, i) => i !== index));
+      markAsChanged();
     }
   };
 
@@ -98,6 +131,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
     const newTasks = [...tasks];
     newTasks[index] = task;
     setTasks(newTasks);
+    markAsChanged();
   };
 
   const onSubmit = async (data: CreatePortfolioData) => {
@@ -128,6 +162,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
           }
         }
         
+        markAsSaved();
         setLocation("/portfolios");
       } else {
         const newPortfolio = await createPortfolio.mutateAsync(data);
@@ -142,6 +177,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
           }
         }
         
+        markAsSaved();
         setLocation("/portfolios");
       }
     } catch (error) {
@@ -200,7 +236,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setLocation("/portfolios")}
+          onClick={() => handleNavigateWithConfirmation("/portfolios")}
           data-testid="button-close-form"
         >
           <X className="h-4 w-4" />
@@ -288,7 +324,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
                   <Button
                     type="button"
                     className="w-full sm:w-auto bg-gray-500 hover:bg-gray-600 text-white"
-                    onClick={() => setLocation("/portfolios")}
+                    onClick={() => handleNavigateWithConfirmation("/portfolios")}
                     data-testid="button-cancel"
                   >
                     Отмена
@@ -308,6 +344,14 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
           />
         </div>
       </div>
+      
+      <ConfirmDialog
+        open={showConfirmDialog}
+        onOpenChange={setShowConfirmDialog}
+        title="Несохранённые изменения"
+        description="У вас есть несохранённые изменения. Вы уверены, что хотите покинуть эту страницу?"
+        onConfirm={handleConfirmNavigation}
+      />
     </div>
   );
 }

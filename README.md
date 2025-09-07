@@ -40,7 +40,7 @@ npm install
 2. Запустите dev-сервер:
 npm run dev -- --host 0.0.0.0
 
-text
+
 3. Откройте в браузере http://localhost:3000
 
 ### Запуск на Replit
@@ -60,11 +60,4 @@ text
 - Генерация Markdown-сводок для Jira  
 - Ролевой доступ: user и admin
 
-## Тестирование
 
-- Backend: pytest  
-- Frontend: Jest + React Testing Library  
-
-## Развертывание
-
-Поддерживается запуск на Replit из коробки. Для других платформ настройте базу данных и переменные окружения.

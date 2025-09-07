@@ -121,13 +121,18 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
         })));
       }
       
+      // Join WebSocket room for real-time collaboration
+      if (portfolioId && isConnected) {
+        joinPortfolio(portfolioId);
+      }
+      
       // Mark as initialized after loading data
       setTimeout(() => setIsInitialized(true), 100);
     } else if (!isEditing) {
       // For new portfolios, initialize immediately
       setIsInitialized(true);
     }
-  }, [portfolio, isEditing, setValue]);
+  }, [portfolio, isEditing, setValue, portfolioId, isConnected, joinPortfolio]);
   
   // Clear unsaved changes when component unmounts or portfolio ID changes
   useEffect(() => {

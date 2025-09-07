@@ -1,17 +1,31 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/hooks/useAuth';
 
 interface WebSocketMessage {
   type: string;
   portfolioId?: string;
   taskId?: string;
+  fieldId?: string;
+  value?: any;
   data?: any;
+  userId?: string;
+  username?: string;
+}
+
+interface ActiveField {
+  fieldId: string;
+  taskId?: string;
+  userId: string;
+  username: string;
 }
 
 export function useWebSocket() {
   const wsRef = useRef<WebSocket | null>(null);
   const queryClient = useQueryClient();
   const isConnectedRef = useRef(false);
+  const { user } = useAuth();
+  const [activeFields, setActiveFields] = useState<Map<string, ActiveField>>(new Map());
   
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -50,6 +64,46 @@ export function useWebSocket() {
             
           case 'joined_portfolio':
             console.log('Joined portfolio:', message.portfolioId);
+            break;
+            
+          case 'user_field_focus':
+            // Another user focused on a field
+            setActiveFields(prev => {
+              const newMap = new Map(prev);
+              const fieldKey = message.taskId ? `${message.fieldId}-${message.taskId}` : message.fieldId!;
+              newMap.set(fieldKey, {
+                fieldId: message.fieldId!,
+                taskId: message.taskId,
+                userId: message.userId!,
+                username: message.username!
+              });
+              return newMap;
+            });
+            break;
+            
+          case 'user_field_blur':
+            // Another user unfocused from a field
+            setActiveFields(prev => {
+              const newMap = new Map(prev);
+              const fieldKey = message.taskId ? `${message.fieldId}-${message.taskId}` : message.fieldId!;
+              newMap.delete(fieldKey);
+              return newMap;
+            });
+            break;
+            
+          case 'field_changed':
+            // Real-time field value changes from another user
+            const fieldKey = message.taskId ? `${message.fieldId}-${message.taskId}` : message.fieldId!;
+            
+            // Update the field in the DOM if it exists and is not currently focused by this user
+            const fieldElement = document.querySelector(`[data-field-id="${fieldKey}"]`) as HTMLInputElement | HTMLTextAreaElement;
+            if (fieldElement && document.activeElement !== fieldElement) {
+              fieldElement.value = message.value || '';
+              
+              // Trigger a change event to update React form state
+              const event = new Event('input', { bubbles: true });
+              fieldElement.dispatchEvent(event);
+            }
             break;
         }
       } catch (error) {
@@ -91,9 +145,11 @@ export function useWebSocket() {
   const joinPortfolio = useCallback((portfolioId: string) => {
     sendMessage({
       type: 'join_portfolio',
-      portfolioId
+      portfolioId,
+      userId: user?.id,
+      username: user?.username
     });
-  }, [sendMessage]);
+  }, [sendMessage, user]);
 
   const notifyPortfolioUpdate = useCallback((portfolioId: string, data: any) => {
     sendMessage({
@@ -112,6 +168,39 @@ export function useWebSocket() {
     });
   }, [sendMessage]);
 
+  const notifyFieldFocus = useCallback((portfolioId: string, fieldId: string, taskId?: string) => {
+    sendMessage({
+      type: 'field_focus',
+      portfolioId,
+      fieldId,
+      taskId
+    });
+  }, [sendMessage]);
+
+  const notifyFieldBlur = useCallback((portfolioId: string, fieldId: string, taskId?: string) => {
+    sendMessage({
+      type: 'field_blur',
+      portfolioId,
+      fieldId,
+      taskId
+    });
+  }, [sendMessage]);
+
+  const notifyFieldChange = useCallback((portfolioId: string, fieldId: string, value: any, taskId?: string) => {
+    sendMessage({
+      type: 'field_change',
+      portfolioId,
+      fieldId,
+      value,
+      taskId
+    });
+  }, [sendMessage]);
+
+  const getActiveFieldUser = useCallback((fieldId: string, taskId?: string) => {
+    const fieldKey = taskId ? `${fieldId}-${taskId}` : fieldId;
+    return activeFields.get(fieldKey);
+  }, [activeFields]);
+
   useEffect(() => {
     connect();
     return disconnect;
@@ -123,6 +212,11 @@ export function useWebSocket() {
     joinPortfolio,
     notifyPortfolioUpdate,
     notifyTaskUpdate,
+    notifyFieldFocus,
+    notifyFieldBlur,
+    notifyFieldChange,
+    getActiveFieldUser,
+    activeFields,
     reconnect: connect,
   };
 }

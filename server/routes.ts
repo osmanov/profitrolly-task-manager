@@ -78,6 +78,11 @@ export function registerRoutes(app: Express): Server {
             }
             portfolioConnections.get(portfolioId)!.add(ws);
             
+            // Store user info on the websocket
+            (ws as any).userId = message.userId;
+            (ws as any).username = message.username;
+            (ws as any).portfolioId = portfolioId;
+            
             // Notify user joined
             ws.send(JSON.stringify({
               type: 'joined_portfolio',
@@ -114,6 +119,67 @@ export function registerRoutes(app: Express): Server {
                     portfolioId: taskPortfolioId,
                     taskId: message.taskId,
                     data: message.data
+                  }));
+                }
+              });
+            }
+            break;
+            
+          case 'field_focus':
+            // Broadcast field focus to other users
+            const focusPortfolioId = message.portfolioId;
+            const focusConnections = portfolioConnections.get(focusPortfolioId);
+            if (focusConnections) {
+              focusConnections.forEach(client => {
+                if (client !== ws && client.readyState === WebSocket.OPEN) {
+                  client.send(JSON.stringify({
+                    type: 'user_field_focus',
+                    portfolioId: focusPortfolioId,
+                    fieldId: message.fieldId,
+                    taskId: message.taskId,
+                    userId: (ws as any).userId,
+                    username: (ws as any).username
+                  }));
+                }
+              });
+            }
+            break;
+            
+          case 'field_blur':
+            // Broadcast field blur to other users
+            const blurPortfolioId = message.portfolioId;
+            const blurConnections = portfolioConnections.get(blurPortfolioId);
+            if (blurConnections) {
+              blurConnections.forEach(client => {
+                if (client !== ws && client.readyState === WebSocket.OPEN) {
+                  client.send(JSON.stringify({
+                    type: 'user_field_blur',
+                    portfolioId: blurPortfolioId,
+                    fieldId: message.fieldId,
+                    taskId: message.taskId,
+                    userId: (ws as any).userId,
+                    username: (ws as any).username
+                  }));
+                }
+              });
+            }
+            break;
+            
+          case 'field_change':
+            // Broadcast real-time field changes
+            const changePortfolioId = message.portfolioId;
+            const changeConnections = portfolioConnections.get(changePortfolioId);
+            if (changeConnections) {
+              changeConnections.forEach(client => {
+                if (client !== ws && client.readyState === WebSocket.OPEN) {
+                  client.send(JSON.stringify({
+                    type: 'field_changed',
+                    portfolioId: changePortfolioId,
+                    fieldId: message.fieldId,
+                    taskId: message.taskId,
+                    value: message.value,
+                    userId: (ws as any).userId,
+                    username: (ws as any).username
                   }));
                 }
               });

@@ -446,6 +446,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const collaboration = await storage.inviteUserToPortfolio(collaborationData);
+      
+      // Create notification for the invited user
+      await storage.createNotification({
+        userId: collaborationData.userId,
+        type: 'collaboration_invite',
+        title: 'Приглашение в Portfolio',
+        message: `Вы приглашены к сотрудничеству в портфолио "${portfolio.name}" с ролью ${collaborationData.role}`,
+        data: JSON.stringify({
+          portfolioId: portfolio.id,
+          collaboratorId: collaboration.id,
+          portfolioName: portfolio.name,
+          role: collaborationData.role
+        })
+      });
+      
       res.status(201).json(collaboration);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -550,6 +565,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.json({ message: "Invitation declined" });
       } else {
         res.status(400).json({ message: "Failed to decline invitation" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Notification routes
+  app.get("/api/notifications", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const notifications = await storage.getUserNotifications(req.user!.id);
+      res.json(notifications);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/notifications/:id/read", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const success = await storage.markNotificationAsRead(req.params.id);
+      if (success) {
+        res.json({ message: "Notification marked as read" });
+      } else {
+        res.status(404).json({ message: "Notification not found" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/notifications/:id", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const success = await storage.deleteNotification(req.params.id);
+      if (success) {
+        res.json({ message: "Notification deleted" });
+      } else {
+        res.status(404).json({ message: "Notification not found" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Accept/Decline collaboration from notification
+  app.post("/api/notifications/:id/accept-collaboration", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      // Get notification and verify it's a collaboration invite
+      const notifications = await storage.getUserNotifications(req.user!.id);
+      const notification = notifications.find(n => n.id === req.params.id && n.type === 'collaboration_invite');
+      
+      if (!notification) {
+        return res.status(404).json({ message: "Collaboration invitation not found" });
+      }
+
+      const data = JSON.parse(notification.data || '{}');
+      const collaboratorId = data.collaboratorId;
+
+      if (!collaboratorId) {
+        return res.status(400).json({ message: "Invalid notification data" });
+      }
+
+      const collaboration = await storage.acceptCollaboration(collaboratorId);
+      if (collaboration) {
+        // Mark notification as read and delete it
+        await storage.markNotificationAsRead(req.params.id);
+        await storage.deleteNotification(req.params.id);
+        
+        res.json({ message: "Collaboration accepted", collaboration });
+      } else {
+        res.status(400).json({ message: "Failed to accept collaboration" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/notifications/:id/decline-collaboration", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      // Get notification and verify it's a collaboration invite
+      const notifications = await storage.getUserNotifications(req.user!.id);
+      const notification = notifications.find(n => n.id === req.params.id && n.type === 'collaboration_invite');
+      
+      if (!notification) {
+        return res.status(404).json({ message: "Collaboration invitation not found" });
+      }
+
+      const data = JSON.parse(notification.data || '{}');
+      const collaboratorId = data.collaboratorId;
+
+      if (!collaboratorId) {
+        return res.status(400).json({ message: "Invalid notification data" });
+      }
+
+      const success = await storage.declineCollaboration(collaboratorId);
+      if (success) {
+        // Mark notification as read and delete it
+        await storage.markNotificationAsRead(req.params.id);
+        await storage.deleteNotification(req.params.id);
+        
+        res.json({ message: "Collaboration declined" });
+      } else {
+        res.status(400).json({ message: "Failed to decline collaboration" });
       }
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });

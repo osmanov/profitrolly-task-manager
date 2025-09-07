@@ -158,7 +158,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(users, eq(portfolios.userId, users.id))
       .where(eq(portfolios.id, id));
 
-    if (!portfolio) {
+    if (!portfolio || !portfolio.user) {
       return undefined;
     }
 
@@ -170,6 +170,7 @@ export class DatabaseStorage implements IStorage {
 
     return {
       ...portfolio,
+      user: portfolio.user,
       tasks: portfolioTasks,
     };
   }
@@ -195,7 +196,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(portfolios)
       .where(eq(portfolios.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   async getTasks(portfolioId: string): Promise<Task[]> {
@@ -235,7 +236,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(tasks)
       .where(eq(tasks.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 
   async getSystemSettings(): Promise<SystemSettings | undefined> {
@@ -291,7 +292,7 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(teams)
       .where(eq(teams.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
   }
 }
 

@@ -3,8 +3,10 @@ import { createServer, type Server } from "http";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { storage } from "./storage";
-import { insertUserSchema, loginSchema, insertPortfolioSchema, insertTaskSchema, insertSystemSettingsSchema } from "@shared/schema";
+import { insertUserSchema, loginSchema, insertPortfolioSchema, insertTaskSchema, insertSystemSettingsSchema, insertPortfolioCollaboratorSchema, portfolioCollaborators } from "@shared/schema";
 import { z } from "zod";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-jwt-key";
 const JWT_EXPIRES_IN = "7d";
@@ -162,7 +164,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Portfolio routes
   app.get("/api/portfolios", authenticateToken, async (req: AuthRequest, res) => {
     try {
-      const portfolios = await storage.getPortfolios(req.user!.id);
+      const portfolios = await storage.getAllUserPortfolios(req.user!.id);
       res.json(portfolios);
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
@@ -176,8 +178,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Portfolio not found" });
       }
 
-      // Check if user owns the portfolio or is admin
-      if (portfolio.userId !== req.user!.id && req.user!.role !== "admin") {
+      // Check if user has access to portfolio
+      const userAccess = await storage.getUserPortfolioAccess(req.user!.id, req.params.id);
+      if (!userAccess && req.user!.role !== "admin") {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -211,9 +214,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Portfolio not found" });
       }
 
-      // Check if user owns the portfolio or is admin
-      if (portfolio.userId !== req.user!.id && req.user!.role !== "admin") {
-        return res.status(403).json({ message: "Access denied" });
+      // Check if user has edit access
+      const userAccess = await storage.getUserPortfolioAccess(req.user!.id, req.params.id);
+      if (!userAccess || (userAccess.role === 'viewer') && req.user!.role !== "admin") {
+        return res.status(403).json({ message: "Edit access required" });
       }
 
       const portfolioData = insertPortfolioSchema.partial().parse(req.body);
@@ -235,9 +239,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Portfolio not found" });
       }
 
-      // Check if user owns the portfolio or is admin
+      // Only owner can delete portfolio
       if (portfolio.userId !== req.user!.id && req.user!.role !== "admin") {
-        return res.status(403).json({ message: "Access denied" });
+        return res.status(403).json({ message: "Only portfolio owner can delete it" });
       }
 
       const success = await storage.deletePortfolio(req.params.id);
@@ -259,8 +263,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Portfolio not found" });
       }
 
-      // Check if user owns the portfolio or is admin
-      if (portfolio.userId !== req.user!.id && req.user!.role !== "admin") {
+      // Check if user has access to portfolio
+      const userAccess = await storage.getUserPortfolioAccess(req.user!.id, req.params.id);
+      if (!userAccess && req.user!.role !== "admin") {
         return res.status(403).json({ message: "Access denied" });
       }
 
@@ -278,9 +283,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Portfolio not found" });
       }
 
-      // Check if user owns the portfolio or is admin
-      if (portfolio.userId !== req.user!.id && req.user!.role !== "admin") {
-        return res.status(403).json({ message: "Access denied" });
+      // Check if user has edit access
+      const userAccess = await storage.getUserPortfolioAccess(req.user!.id, req.params.id);
+      if (!userAccess || (userAccess.role === 'viewer') && req.user!.role !== "admin") {
+        return res.status(403).json({ message: "Edit access required" });
       }
 
       const taskData = insertTaskSchema.parse(req.body);
@@ -310,9 +316,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Portfolio not found" });
       }
 
-      // Check if user owns the portfolio or is admin
-      if (portfolio.userId !== req.user!.id && req.user!.role !== "admin") {
-        return res.status(403).json({ message: "Access denied" });
+      // Check if user has edit access
+      const userAccess = await storage.getUserPortfolioAccess(req.user!.id, task.portfolioId);
+      if (!userAccess || (userAccess.role === 'viewer') && req.user!.role !== "admin") {
+        return res.status(403).json({ message: "Edit access required" });
       }
 
       const taskData = insertTaskSchema.partial().parse(req.body);
@@ -339,9 +346,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Portfolio not found" });
       }
 
-      // Check if user owns the portfolio or is admin
-      if (portfolio.userId !== req.user!.id && req.user!.role !== "admin") {
-        return res.status(403).json({ message: "Access denied" });
+      // Check if user has edit access
+      const userAccess = await storage.getUserPortfolioAccess(req.user!.id, task.portfolioId);
+      if (!userAccess || (userAccess.role === 'viewer') && req.user!.role !== "admin") {
+        return res.status(403).json({ message: "Edit access required" });
       }
 
       const success = await storage.deleteTask(req.params.id);
@@ -378,6 +386,172 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors[0].message });
       }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // User search routes
+  app.get("/api/users/search", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const { q, exclude } = req.query;
+      if (!q || typeof q !== 'string') {
+        return res.status(400).json({ message: "Query parameter 'q' is required" });
+      }
+      
+      const excludeIds = exclude ? (Array.isArray(exclude) ? exclude as string[] : [exclude as string]) : [];
+      const users = await storage.getUsersForInvite(q, [...excludeIds, req.user!.id]);
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Portfolio collaboration routes
+  app.get("/api/portfolios/:id/collaborators", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const portfolio = await storage.getPortfolio(req.params.id);
+      if (!portfolio) {
+        return res.status(404).json({ message: "Portfolio not found" });
+      }
+
+      // Check if user has access to portfolio
+      const userAccess = await storage.getUserPortfolioAccess(req.user!.id, req.params.id);
+      if (!userAccess && req.user!.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const collaborators = await storage.getPortfolioCollaborators(req.params.id);
+      res.json(collaborators);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/portfolios/:id/collaborators", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const portfolio = await storage.getPortfolio(req.params.id);
+      if (!portfolio) {
+        return res.status(404).json({ message: "Portfolio not found" });
+      }
+
+      // Only owner can invite collaborators
+      if (portfolio.userId !== req.user!.id && req.user!.role !== "admin") {
+        return res.status(403).json({ message: "Only portfolio owner can invite collaborators" });
+      }
+
+      const collaborationData = insertPortfolioCollaboratorSchema.parse({
+        ...req.body,
+        portfolioId: req.params.id,
+        invitedBy: req.user!.id,
+      });
+
+      const collaboration = await storage.inviteUserToPortfolio(collaborationData);
+      res.status(201).json(collaboration);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/collaborators/:id/role", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const { role } = req.body;
+      if (!role || !['owner', 'editor', 'viewer'].includes(role)) {
+        return res.status(400).json({ message: "Valid role is required" });
+      }
+
+      // Get collaboration and check permissions
+      const [collaboration] = await db.select().from(portfolioCollaborators).where(eq(portfolioCollaborators.id, req.params.id));
+      if (!collaboration) {
+        return res.status(404).json({ message: "Collaboration not found" });
+      }
+
+      const portfolio = await storage.getPortfolio(collaboration.portfolioId);
+      if (!portfolio) {
+        return res.status(404).json({ message: "Portfolio not found" });
+      }
+
+      // Only owner can change roles
+      if (portfolio.userId !== req.user!.id && req.user!.role !== "admin") {
+        return res.status(403).json({ message: "Only portfolio owner can change roles" });
+      }
+
+      const updated = await storage.updateCollaboratorRole(req.params.id, role);
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/collaborators/:id", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      // Get collaboration and check permissions
+      const [collaboration] = await db.select().from(portfolioCollaborators).where(eq(portfolioCollaborators.id, req.params.id));
+      if (!collaboration) {
+        return res.status(404).json({ message: "Collaboration not found" });
+      }
+
+      const portfolio = await storage.getPortfolio(collaboration.portfolioId);
+      if (!portfolio) {
+        return res.status(404).json({ message: "Portfolio not found" });
+      }
+
+      // Owner can remove anyone, collaborator can remove themselves
+      if (portfolio.userId !== req.user!.id && collaboration.userId !== req.user!.id && req.user!.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const success = await storage.removeCollaborator(req.params.id);
+      if (success) {
+        res.json({ message: "Collaborator removed successfully" });
+      } else {
+        res.status(400).json({ message: "Failed to remove collaborator" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/collaborators/:id/accept", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      // Get collaboration and check if user can accept
+      const [collaboration] = await db.select().from(portfolioCollaborators).where(eq(portfolioCollaborators.id, req.params.id));
+      if (!collaboration) {
+        return res.status(404).json({ message: "Collaboration not found" });
+      }
+
+      if (collaboration.userId !== req.user!.id) {
+        return res.status(403).json({ message: "You can only accept your own invitations" });
+      }
+
+      const updated = await storage.acceptCollaboration(req.params.id);
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/collaborators/:id/decline", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      // Get collaboration and check if user can decline
+      const [collaboration] = await db.select().from(portfolioCollaborators).where(eq(portfolioCollaborators.id, req.params.id));
+      if (!collaboration) {
+        return res.status(404).json({ message: "Collaboration not found" });
+      }
+
+      if (collaboration.userId !== req.user!.id) {
+        return res.status(403).json({ message: "You can only decline your own invitations" });
+      }
+
+      const success = await storage.declineCollaboration(req.params.id);
+      if (success) {
+        res.json({ message: "Invitation declined" });
+      } else {
+        res.status(400).json({ message: "Failed to decline invitation" });
+      }
+    } catch (error) {
       res.status(500).json({ message: "Internal server error" });
     }
   });

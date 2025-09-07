@@ -4,6 +4,7 @@ import {
   tasks,
   systemSettings,
   teams,
+  portfolioCollaborators,
   type User,
   type InsertUser,
   type Portfolio,
@@ -15,9 +16,12 @@ import {
   type Team,
   type InsertTeam,
   type PortfolioWithTasks,
+  type PortfolioCollaborator,
+  type InsertPortfolioCollaborator,
+  type CollaborationRole,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc } from "drizzle-orm";
+import { eq, and, desc, asc, or, like, not, inArray, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -52,6 +56,17 @@ export interface IStorage {
   createTeam(team: InsertTeam): Promise<Team>;
   updateTeam(id: string, team: Partial<InsertTeam>): Promise<Team | undefined>;
   deleteTeam(id: string): Promise<boolean>;
+  
+  // Collaboration
+  getUsersForInvite(query: string, excludeUserIds: string[]): Promise<Pick<User, 'id' | 'username' | 'fullName'>[]>;
+  inviteUserToPortfolio(collaboration: InsertPortfolioCollaborator): Promise<PortfolioCollaborator>;
+  getPortfolioCollaborators(portfolioId: string): Promise<Array<PortfolioCollaborator & { user: Pick<User, 'id' | 'username' | 'fullName'>; inviter: Pick<User, 'id' | 'username' | 'fullName'> }>>;
+  updateCollaboratorRole(collaborationId: string, role: CollaborationRole): Promise<PortfolioCollaborator | undefined>;
+  removeCollaborator(collaborationId: string): Promise<boolean>;
+  acceptCollaboration(collaborationId: string): Promise<PortfolioCollaborator | undefined>;
+  declineCollaboration(collaborationId: string): Promise<boolean>;
+  getUserPortfolioAccess(userId: string, portfolioId: string): Promise<{ role: CollaborationRole; isOwner: boolean } | null>;
+  getAllUserPortfolios(userId: string): Promise<Portfolio[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -263,6 +278,182 @@ export class DatabaseStorage implements IStorage {
       .delete(teams)
       .where(eq(teams.id, id));
     return result.rowCount! > 0;
+  }
+  
+  // Collaboration methods
+  async getUsersForInvite(query: string, excludeUserIds: string[]): Promise<Pick<User, 'id' | 'username' | 'fullName'>[]> {
+    const whereClause = and(
+      or(
+        like(users.username, `%${query}%`),
+        like(users.fullName, `%${query}%`),
+        like(users.email, `%${query}%`)
+      ),
+      eq(users.isActive, true),
+      excludeUserIds.length > 0 ? not(inArray(users.id, excludeUserIds)) : undefined
+    );
+    
+    return await db
+      .select({
+        id: users.id,
+        username: users.username,
+        fullName: users.fullName,
+      })
+      .from(users)
+      .where(whereClause)
+      .limit(10);
+  }
+  
+  async inviteUserToPortfolio(collaboration: InsertPortfolioCollaborator): Promise<PortfolioCollaborator> {
+    const [invited] = await db
+      .insert(portfolioCollaborators)
+      .values(collaboration)
+      .returning();
+    return invited;
+  }
+  
+  async getPortfolioCollaborators(portfolioId: string): Promise<Array<PortfolioCollaborator & { user: Pick<User, 'id' | 'username' | 'fullName'>; inviter: Pick<User, 'id' | 'username' | 'fullName'> }>> {
+    const collaboratorsWithUsers = await db
+      .select({
+        id: portfolioCollaborators.id,
+        portfolioId: portfolioCollaborators.portfolioId,
+        userId: portfolioCollaborators.userId,
+        role: portfolioCollaborators.role,
+        invitedBy: portfolioCollaborators.invitedBy,
+        invitedAt: portfolioCollaborators.invitedAt,
+        acceptedAt: portfolioCollaborators.acceptedAt,
+        status: portfolioCollaborators.status,
+        user: {
+          id: users.id,
+          username: users.username,
+          fullName: users.fullName,
+        },
+      })
+      .from(portfolioCollaborators)
+      .innerJoin(users, eq(portfolioCollaborators.userId, users.id))
+      .where(eq(portfolioCollaborators.portfolioId, portfolioId));
+    
+    // Get inviters separately to avoid complex join issues
+    const result = [];
+    for (const collab of collaboratorsWithUsers) {
+      const [inviter] = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          fullName: users.fullName,
+        })
+        .from(users)
+        .where(eq(users.id, collab.invitedBy));
+      
+      result.push({
+        ...collab,
+        inviter: inviter || { id: '', username: 'Unknown', fullName: 'Unknown User' }
+      });
+    }
+    
+    return result;
+  }
+  
+  async updateCollaboratorRole(collaborationId: string, role: CollaborationRole): Promise<PortfolioCollaborator | undefined> {
+    const [updated] = await db
+      .update(portfolioCollaborators)
+      .set({ role })
+      .where(eq(portfolioCollaborators.id, collaborationId))
+      .returning();
+    return updated;
+  }
+  
+  async removeCollaborator(collaborationId: string): Promise<boolean> {
+    const result = await db
+      .delete(portfolioCollaborators)
+      .where(eq(portfolioCollaborators.id, collaborationId));
+    return result.rowCount! > 0;
+  }
+  
+  async acceptCollaboration(collaborationId: string): Promise<PortfolioCollaborator | undefined> {
+    const [updated] = await db
+      .update(portfolioCollaborators)
+      .set({ 
+        status: 'accepted',
+        acceptedAt: sql`CURRENT_TIMESTAMP`
+      })
+      .where(eq(portfolioCollaborators.id, collaborationId))
+      .returning();
+    return updated;
+  }
+  
+  async declineCollaboration(collaborationId: string): Promise<boolean> {
+    const [updated] = await db
+      .update(portfolioCollaborators)
+      .set({ status: 'declined' })
+      .where(eq(portfolioCollaborators.id, collaborationId))
+      .returning();
+    return !!updated;
+  }
+  
+  async getUserPortfolioAccess(userId: string, portfolioId: string): Promise<{ role: CollaborationRole; isOwner: boolean } | null> {
+    // Check if user is owner
+    const [portfolio] = await db
+      .select({ userId: portfolios.userId })
+      .from(portfolios)
+      .where(eq(portfolios.id, portfolioId));
+    
+    if (portfolio?.userId === userId) {
+      return { role: 'owner' as CollaborationRole, isOwner: true };
+    }
+    
+    // Check if user is collaborator
+    const [collaboration] = await db
+      .select({ role: portfolioCollaborators.role })
+      .from(portfolioCollaborators)
+      .where(
+        and(
+          eq(portfolioCollaborators.portfolioId, portfolioId),
+          eq(portfolioCollaborators.userId, userId),
+          eq(portfolioCollaborators.status, 'accepted')
+        )
+      );
+    
+    if (collaboration) {
+      return { role: collaboration.role as CollaborationRole, isOwner: false };
+    }
+    
+    return null;
+  }
+  
+  async getAllUserPortfolios(userId: string): Promise<Portfolio[]> {
+    // Get owned portfolios
+    const ownedPortfolios = await db
+      .select()
+      .from(portfolios)
+      .where(eq(portfolios.userId, userId));
+    
+    // Get collaborated portfolios
+    const collaboratedPortfolios = await db
+      .select({
+        id: portfolios.id,
+        name: portfolios.name,
+        userId: portfolios.userId,
+        startDate: portfolios.startDate,
+        createdAt: portfolios.createdAt,
+        updatedAt: portfolios.updatedAt,
+        isArchived: portfolios.isArchived,
+      })
+      .from(portfolios)
+      .innerJoin(portfolioCollaborators, eq(portfolios.id, portfolioCollaborators.portfolioId))
+      .where(
+        and(
+          eq(portfolioCollaborators.userId, userId),
+          eq(portfolioCollaborators.status, 'accepted')
+        )
+      );
+    
+    // Combine and deduplicate
+    const allPortfolios = [...ownedPortfolios, ...collaboratedPortfolios];
+    const uniquePortfolios = allPortfolios.filter((portfolio, index, self) => 
+      index === self.findIndex(p => p.id === portfolio.id)
+    );
+    
+    return uniquePortfolios;
   }
 }
 

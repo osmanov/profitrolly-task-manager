@@ -5,6 +5,7 @@ import { z } from "zod";
 
 // Enums
 export const collaboratorRoleEnum = pgEnum('collaborator_role', ['owner', 'editor', 'viewer']);
+export const notificationTypeEnum = pgEnum('notification_type', ['collaboration_invite', 'collaboration_accepted', 'collaboration_declined']);
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -64,6 +65,17 @@ export const portfolioCollaborators = pgTable("portfolio_collaborators", {
   status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, accepted, declined
 });
 
+export const notifications = pgTable("notifications", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  type: notificationTypeEnum("type").notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  message: text("message").notNull(),
+  data: text("data"), // JSON string for additional data (e.g., portfolioId, collaboratorId)
+  isRead: boolean("is_read").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   portfolios: many(portfolios),
@@ -72,6 +84,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   invitedCollaborations: many(portfolioCollaborators, {
     relationName: "invitedBy"
   }),
+  notifications: many(notifications),
 }));
 
 export const portfoliosRelations = relations(portfolios, ({ one, many }) => ({
@@ -113,6 +126,13 @@ export const portfolioCollaboratorsRelations = relations(portfolioCollaborators,
   }),
 }));
 
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
+}));
+
 // Schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -140,6 +160,11 @@ export const insertSystemSettingsSchema = createInsertSchema(systemSettings).omi
   id: true,
   updatedBy: true,
   updatedAt: true,
+});
+
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertTeamSchema = createInsertSchema(teams).omit({

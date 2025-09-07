@@ -16,6 +16,7 @@ interface CollaborativeInputProps {
   placeholder?: string;
   className?: string;
   type?: 'input' | 'textarea';
+  inputType?: string;
   disabled?: boolean;
   [key: string]: any;
 }
@@ -31,6 +32,7 @@ export function CollaborativeInput({
   placeholder,
   className,
   type = 'input',
+  inputType,
   disabled,
   ...props
 }: CollaborativeInputProps) {
@@ -104,6 +106,7 @@ export function CollaborativeInput({
         className={inputClasses}
         disabled={disabled}
         data-field-id={fieldKey}
+        type={inputType}
         {...props}
       />
       {isBeingEditedByOther && (

@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CollaborativeInput } from "@/components/ui/collaborative-input";
 import type { CreateTaskData } from "@/types/portfolio";
 
 interface TaskBlockProps {
@@ -12,6 +13,8 @@ interface TaskBlockProps {
   onUpdate: (index: number, task: CreateTaskData) => void;
   onRemove: (index: number) => void;
   canRemove: boolean;
+  portfolioId?: string;
+  isEditing?: boolean;
 }
 
 const TEAMS = [
@@ -20,7 +23,7 @@ const TEAMS = [
   { value: "testing", label: "Тестирование" },
 ];
 
-export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove }: TaskBlockProps) {
+export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove, portfolioId, isEditing }: TaskBlockProps) {
   const handleChange = (field: keyof CreateTaskData, value: string | number | undefined) => {
     onUpdate(index, { ...task, [field]: value });
   };
@@ -69,13 +72,25 @@ export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove }
       <div className="space-y-4">
         <div>
           <Label htmlFor={`title-${index}`}>Название задачи</Label>
-          <Input
-            id={`title-${index}`}
-            placeholder="Краткое название задачи"
-            value={task.title}
-            onChange={(e) => handleChange("title", e.target.value)}
-            data-testid={`input-task-title-${index}`}
-          />
+          {isEditing && portfolioId ? (
+            <CollaborativeInput
+              portfolioId={portfolioId}
+              fieldId="title"
+              taskId={index.toString()}
+              value={task.title}
+              onChange={(value) => handleChange('title', value)}
+              placeholder="Краткое название задачи"
+              data-testid={`input-task-title-${index}`}
+            />
+          ) : (
+            <Input
+              id={`title-${index}`}
+              placeholder="Краткое название задачи"
+              value={task.title}
+              onChange={(e) => handleChange("title", e.target.value)}
+              data-testid={`input-task-title-${index}`}
+            />
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -100,15 +115,30 @@ export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove }
 
           <div>
             <Label htmlFor={`days-${index}`}>Дни</Label>
-            <Input
-              id={`days-${index}`}
-              type="number"
-              min="1"
-              max="10"
-              value={task.days}
-              onChange={(e) => handleChange("days", parseInt(e.target.value) || 1)}
-              data-testid={`input-task-days-${index}`}
-            />
+            {isEditing && portfolioId ? (
+              <CollaborativeInput
+                portfolioId={portfolioId}
+                fieldId="days"
+                taskId={index.toString()}
+                value={task.days.toString()}
+                onChange={(value) => handleChange('days', parseInt(value) || 1)}
+                placeholder="1"
+                inputType="number"
+                min="1"
+                max="10"
+                data-testid={`input-task-days-${index}`}
+              />
+            ) : (
+              <Input
+                id={`days-${index}`}
+                type="number"
+                min="1"
+                max="10"
+                value={task.days}
+                onChange={(e) => handleChange("days", parseInt(e.target.value) || 1)}
+                data-testid={`input-task-days-${index}`}
+              />
+            )}
           </div>
         </div>
 

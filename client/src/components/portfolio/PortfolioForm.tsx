@@ -321,12 +321,26 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
                 {/* Portfolio Name */}
                 <div>
                   <Label htmlFor="name">Название Portfolio</Label>
-                  <Input
-                    id="name"
-                    placeholder="Введите название портфолио"
-                    {...register("name")}
-                    data-testid="input-portfolio-name"
-                  />
+                  {isEditing && portfolioId ? (
+                    <CollaborativeInput
+                      portfolioId={portfolioId}
+                      fieldId="name"
+                      value={watchedValues.name || ""}
+                      onChange={(value) => {
+                        setValue("name", value);
+                        markAsChanged();
+                      }}
+                      placeholder="Введите название портфолио"
+                      data-testid="input-portfolio-name"
+                    />
+                  ) : (
+                    <Input
+                      id="name"
+                      placeholder="Введите название портфолио"
+                      {...register("name")}
+                      data-testid="input-portfolio-name"
+                    />
+                  )}
                   {errors.name && (
                     <p className="text-sm text-destructive mt-1">{errors.name.message}</p>
                   )}
@@ -335,12 +349,27 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
                 {/* Start Date */}
                 <div>
                   <Label htmlFor="startDate">Дата начала</Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    {...register("startDate")}
-                    data-testid="input-start-date"
-                  />
+                  {isEditing && portfolioId ? (
+                    <CollaborativeInput
+                      portfolioId={portfolioId}
+                      fieldId="startDate"
+                      value={watchedValues.startDate || ""}
+                      onChange={(value) => {
+                        setValue("startDate", value);
+                        markAsChanged();
+                      }}
+                      type="input"
+                      inputType="date"
+                      data-testid="input-start-date"
+                    />
+                  ) : (
+                    <Input
+                      id="startDate"
+                      type="date"
+                      {...register("startDate")}
+                      data-testid="input-start-date"
+                    />
+                  )}
                   {errors.startDate && (
                     <p className="text-sm text-destructive mt-1">{errors.startDate.message}</p>
                   )}
@@ -370,6 +399,8 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
                       onUpdate={updateTask}
                       onRemove={removeTask}
                       canRemove={tasks.length > 1}
+                      portfolioId={portfolioId}
+                      isEditing={isEditing}
                     />
                   ))}
                 </div>

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
+import { useWebSocket } from "@/hooks/useWebSocket";
 import type { Portfolio, PortfolioWithTasks, CreatePortfolioData, CreateTaskData } from "@/types/portfolio";
 
 export const usePortfolios = () => {
@@ -56,15 +57,20 @@ export const useCreatePortfolio = () => {
 export const useUpdatePortfolio = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { notifyPortfolioUpdate } = useWebSocket();
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<CreatePortfolioData> }) => {
       const response = await api.portfolios.update(id, data);
       return response.json();
     },
-    onSuccess: (_, { id }) => {
+    onSuccess: (updatedPortfolio, { id, data }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/portfolios"] });
       queryClient.invalidateQueries({ queryKey: ["/api/portfolios", id] });
+      
+      // Notify other users via WebSocket
+      notifyPortfolioUpdate(id, updatedPortfolio);
+      
       toast({
         title: "Успешно",
         description: "Portfolio успешно обновлено",
@@ -111,15 +117,27 @@ export const useDeletePortfolio = () => {
 export const useCreateTask = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { notifyTaskUpdate } = useWebSocket();
 
   return useMutation({
     mutationFn: async ({ portfolioId, data }: { portfolioId: string; data: CreateTaskData }) => {
       const response = await api.tasks.create(portfolioId, data);
       return response.json();
     },
-    onSuccess: (_, { portfolioId }) => {
+    onSuccess: (newTask, { portfolioId }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/portfolios", portfolioId] });
       queryClient.invalidateQueries({ queryKey: ["/api/portfolios", portfolioId, "tasks"] });
+      
+      // Notify other users via WebSocket
+      if (newTask && newTask.id) {
+        notifyTaskUpdate(portfolioId, newTask.id, newTask);
+      }
+      
+      toast({
+        title: "Успешно",
+        description: "Задача успешно создана",
+        variant: "success",
+      });
     },
     onError: (error: any) => {
       toast({
@@ -134,14 +152,26 @@ export const useCreateTask = () => {
 export const useUpdateTask = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { notifyTaskUpdate } = useWebSocket();
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<CreateTaskData> }) => {
       const response = await api.tasks.update(id, data);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (updatedTask) => {
       queryClient.invalidateQueries({ queryKey: ["/api/portfolios"] });
+      
+      // Notify other users via WebSocket
+      if (updatedTask && updatedTask.portfolioId && updatedTask.id) {
+        notifyTaskUpdate(updatedTask.portfolioId, updatedTask.id, updatedTask);
+      }
+      
+      toast({
+        title: "Успешно",
+        description: "Задача успешно обновлена",
+        variant: "success",
+      });
     },
     onError: (error: any) => {
       toast({

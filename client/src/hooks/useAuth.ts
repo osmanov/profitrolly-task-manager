@@ -18,7 +18,7 @@ export const useAuth = () => {
 
   const { data: user, isLoading } = useQuery({
     queryKey: ["/api/auth/me"],
-    enabled: isInitialized && authService.isAuthenticated(),
+    enabled: false, // Temporarily disable to stop infinite requests
     retry: false,
   });
 

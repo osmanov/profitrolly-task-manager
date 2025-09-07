@@ -25,16 +25,36 @@ export const authService = {
   },
 
   isAuthenticated: (): boolean => {
-    return !!authService.getToken();
+    const token = authService.getToken();
+    if (!token) return false;
+    
+    try {
+      // Basic JWT validation - check if it's expired
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const currentTime = Math.floor(Date.now() / 1000);
+      
+      if (payload.exp && payload.exp < currentTime) {
+        // Token expired, clean up
+        authService.logout();
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      // Invalid token format, clean up
+      authService.logout();
+      return false;
+    }
   },
 
   logout: (): void => {
     authService.removeToken();
-    window.location.href = "/login";
+    localStorage.clear(); // Clear all localStorage for clean state
+    // Don't redirect automatically, let the app handle routing
   },
 };
 
-// Add token to all API requests
+// Add token to all API requests and handle 401 errors
 export const setupAuthInterceptor = () => {
   const originalFetch = window.fetch;
   window.fetch = async (input, init = {}) => {
@@ -45,6 +65,17 @@ export const setupAuthInterceptor = () => {
         Authorization: `Bearer ${token}`,
       };
     }
-    return originalFetch(input, init);
+    
+    const response = await originalFetch(input, init);
+    
+    // If we get 401, clear tokens and redirect to login
+    if (response.status === 401) {
+      authService.logout();
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+        window.location.href = "/login";
+      }
+    }
+    
+    return response;
   };
 };

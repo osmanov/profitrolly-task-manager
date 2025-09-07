@@ -4,8 +4,6 @@ import {
   tasks,
   systemSettings,
   teams,
-  portfolioCollaborators,
-  notifications,
   type User,
   type InsertUser,
   type Portfolio,
@@ -17,14 +15,9 @@ import {
   type Team,
   type InsertTeam,
   type PortfolioWithTasks,
-  type PortfolioCollaborator,
-  type InsertPortfolioCollaborator,
-  type CollaborationRole,
-  type Notification,
-  type InsertNotification,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc, or, like, not, inArray, sql } from "drizzle-orm";
+import { eq, and, desc, asc, or, ilike } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -33,9 +26,10 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByUsernameOrEmail(usernameOrEmail: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  searchUsers(query: string): Promise<User[]>;
   
-  // Portfolios
-  getPortfolios(userId: string): Promise<Portfolio[]>;
+  // Portfolios (all portfolios are now public to all users)
+  getAllPortfolios(): Promise<Portfolio[]>;
   getPortfolio(id: string): Promise<Portfolio | undefined>;
   getPortfolioWithTasks(id: string): Promise<PortfolioWithTasks | undefined>;
   createPortfolio(portfolio: InsertPortfolio & { userId: string }): Promise<Portfolio>;
@@ -59,23 +53,6 @@ export interface IStorage {
   createTeam(team: InsertTeam): Promise<Team>;
   updateTeam(id: string, team: Partial<InsertTeam>): Promise<Team | undefined>;
   deleteTeam(id: string): Promise<boolean>;
-  
-  // Collaboration
-  getUsersForInvite(query: string, excludeUserIds: string[]): Promise<Pick<User, 'id' | 'username' | 'fullName'>[]>;
-  inviteUserToPortfolio(collaboration: InsertPortfolioCollaborator): Promise<PortfolioCollaborator>;
-  getPortfolioCollaborators(portfolioId: string): Promise<Array<PortfolioCollaborator & { user: Pick<User, 'id' | 'username' | 'fullName'>; inviter: Pick<User, 'id' | 'username' | 'fullName'> }>>;
-  updateCollaboratorRole(collaborationId: string, role: CollaborationRole): Promise<PortfolioCollaborator | undefined>;
-  removeCollaborator(collaborationId: string): Promise<boolean>;
-  acceptCollaboration(collaborationId: string): Promise<PortfolioCollaborator | undefined>;
-  declineCollaboration(collaborationId: string): Promise<boolean>;
-  getUserPortfolioAccess(userId: string, portfolioId: string): Promise<{ role: CollaborationRole; isOwner: boolean } | null>;
-  getAllUserPortfolios(userId: string): Promise<Portfolio[]>;
-  
-  // Notifications
-  createNotification(notification: InsertNotification): Promise<Notification>;
-  getUserNotifications(userId: string): Promise<Notification[]>;
-  markNotificationAsRead(notificationId: string): Promise<boolean>;
-  deleteNotification(notificationId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -118,11 +95,38 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getPortfolios(userId: string): Promise<Portfolio[]> {
+  async searchUsers(query: string): Promise<User[]> {
+    return await db
+      .select({
+        id: users.id,
+        username: users.username,
+        fullName: users.fullName,
+        email: users.email,
+        role: users.role,
+        createdAt: users.createdAt,
+        isActive: users.isActive,
+        passwordHash: users.passwordHash,
+      })
+      .from(users)
+      .where(
+        and(
+          eq(users.isActive, true),
+          or(
+            ilike(users.username, `%${query}%`),
+            ilike(users.fullName, `%${query}%`),
+            ilike(users.email, `%${query}%`)
+          )
+        )
+      )
+      .limit(10);
+  }
+
+  // All portfolios are now public - any authenticated user can see them
+  async getAllPortfolios(): Promise<Portfolio[]> {
     return await db
       .select()
       .from(portfolios)
-      .where(and(eq(portfolios.userId, userId), eq(portfolios.isArchived, false)))
+      .where(eq(portfolios.isArchived, false))
       .orderBy(desc(portfolios.createdAt));
   }
 
@@ -154,7 +158,9 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(users, eq(portfolios.userId, users.id))
       .where(eq(portfolios.id, id));
 
-    if (!portfolio) return undefined;
+    if (!portfolio) {
+      return undefined;
+    }
 
     const portfolioTasks = await db
       .select()
@@ -165,32 +171,31 @@ export class DatabaseStorage implements IStorage {
     return {
       ...portfolio,
       tasks: portfolioTasks,
-      user: portfolio.user!,
     };
   }
 
-  async createPortfolio(portfolio: InsertPortfolio & { userId: string }): Promise<Portfolio> {
-    const [newPortfolio] = await db
+  async createPortfolio(portfolioData: InsertPortfolio & { userId: string }): Promise<Portfolio> {
+    const [portfolio] = await db
       .insert(portfolios)
-      .values(portfolio)
+      .values(portfolioData)
       .returning();
-    return newPortfolio;
+    return portfolio;
   }
 
-  async updatePortfolio(id: string, portfolio: Partial<InsertPortfolio>): Promise<Portfolio | undefined> {
-    const [updated] = await db
+  async updatePortfolio(id: string, portfolioData: Partial<InsertPortfolio>): Promise<Portfolio | undefined> {
+    const [portfolio] = await db
       .update(portfolios)
-      .set({ ...portfolio, updatedAt: new Date() })
+      .set(portfolioData)
       .where(eq(portfolios.id, id))
       .returning();
-    return updated;
+    return portfolio;
   }
 
   async deletePortfolio(id: string): Promise<boolean> {
     const result = await db
       .delete(portfolios)
       .where(eq(portfolios.id, id));
-    return result.rowCount! > 0;
+    return result.rowCount > 0;
   }
 
   async getTasks(portfolioId: string): Promise<Task[]> {
@@ -209,28 +214,28 @@ export class DatabaseStorage implements IStorage {
     return task;
   }
 
-  async createTask(task: InsertTask & { portfolioId: string }): Promise<Task> {
-    const [newTask] = await db
+  async createTask(taskData: InsertTask & { portfolioId: string }): Promise<Task> {
+    const [task] = await db
       .insert(tasks)
-      .values(task)
+      .values(taskData)
       .returning();
-    return newTask;
+    return task;
   }
 
-  async updateTask(id: string, task: Partial<InsertTask>): Promise<Task | undefined> {
-    const [updated] = await db
+  async updateTask(id: string, taskData: Partial<InsertTask>): Promise<Task | undefined> {
+    const [task] = await db
       .update(tasks)
-      .set(task)
+      .set(taskData)
       .where(eq(tasks.id, id))
       .returning();
-    return updated;
+    return task;
   }
 
   async deleteTask(id: string): Promise<boolean> {
     const result = await db
       .delete(tasks)
       .where(eq(tasks.id, id));
-    return result.rowCount! > 0;
+    return result.rowCount > 0;
   }
 
   async getSystemSettings(): Promise<SystemSettings | undefined> {
@@ -242,12 +247,12 @@ export class DatabaseStorage implements IStorage {
     return settings;
   }
 
-  async updateSystemSettings(settings: InsertSystemSettings & { updatedBy: string }): Promise<SystemSettings> {
-    const [updated] = await db
+  async updateSystemSettings(settingsData: InsertSystemSettings & { updatedBy: string }): Promise<SystemSettings> {
+    const [settings] = await db
       .insert(systemSettings)
-      .values(settings)
+      .values(settingsData)
       .returning();
-    return updated;
+    return settings;
   }
 
   async getTeams(): Promise<Team[]> {
@@ -265,238 +270,28 @@ export class DatabaseStorage implements IStorage {
       .orderBy(asc(teams.name));
   }
 
-  async createTeam(team: InsertTeam): Promise<Team> {
-    const [newTeam] = await db
+  async createTeam(teamData: InsertTeam): Promise<Team> {
+    const [team] = await db
       .insert(teams)
-      .values(team)
+      .values(teamData)
       .returning();
-    return newTeam;
+    return team;
   }
 
-  async updateTeam(id: string, team: Partial<InsertTeam>): Promise<Team | undefined> {
-    const [updated] = await db
+  async updateTeam(id: string, teamData: Partial<InsertTeam>): Promise<Team | undefined> {
+    const [team] = await db
       .update(teams)
-      .set(team)
+      .set(teamData)
       .where(eq(teams.id, id))
       .returning();
-    return updated;
+    return team;
   }
 
   async deleteTeam(id: string): Promise<boolean> {
     const result = await db
       .delete(teams)
       .where(eq(teams.id, id));
-    return result.rowCount! > 0;
-  }
-  
-  // Collaboration methods
-  async getUsersForInvite(query: string, excludeUserIds: string[]): Promise<Pick<User, 'id' | 'username' | 'fullName'>[]> {
-    const whereClause = and(
-      or(
-        like(users.username, `%${query}%`),
-        like(users.fullName, `%${query}%`),
-        like(users.email, `%${query}%`)
-      ),
-      eq(users.isActive, true),
-      excludeUserIds.length > 0 ? not(inArray(users.id, excludeUserIds)) : undefined
-    );
-    
-    return await db
-      .select({
-        id: users.id,
-        username: users.username,
-        fullName: users.fullName,
-      })
-      .from(users)
-      .where(whereClause)
-      .limit(10);
-  }
-  
-  async inviteUserToPortfolio(collaboration: InsertPortfolioCollaborator): Promise<PortfolioCollaborator> {
-    const [invited] = await db
-      .insert(portfolioCollaborators)
-      .values(collaboration)
-      .returning();
-    return invited;
-  }
-  
-  async getPortfolioCollaborators(portfolioId: string): Promise<Array<PortfolioCollaborator & { user: Pick<User, 'id' | 'username' | 'fullName'>; inviter: Pick<User, 'id' | 'username' | 'fullName'> }>> {
-    const collaboratorsWithUsers = await db
-      .select({
-        id: portfolioCollaborators.id,
-        portfolioId: portfolioCollaborators.portfolioId,
-        userId: portfolioCollaborators.userId,
-        role: portfolioCollaborators.role,
-        invitedBy: portfolioCollaborators.invitedBy,
-        invitedAt: portfolioCollaborators.invitedAt,
-        acceptedAt: portfolioCollaborators.acceptedAt,
-        status: portfolioCollaborators.status,
-        user: {
-          id: users.id,
-          username: users.username,
-          fullName: users.fullName,
-        },
-      })
-      .from(portfolioCollaborators)
-      .innerJoin(users, eq(portfolioCollaborators.userId, users.id))
-      .where(eq(portfolioCollaborators.portfolioId, portfolioId));
-    
-    // Get inviters separately to avoid complex join issues
-    const result = [];
-    for (const collab of collaboratorsWithUsers) {
-      const [inviter] = await db
-        .select({
-          id: users.id,
-          username: users.username,
-          fullName: users.fullName,
-        })
-        .from(users)
-        .where(eq(users.id, collab.invitedBy));
-      
-      result.push({
-        ...collab,
-        inviter: inviter || { id: '', username: 'Unknown', fullName: 'Unknown User' }
-      });
-    }
-    
-    return result;
-  }
-  
-  async updateCollaboratorRole(collaborationId: string, role: CollaborationRole): Promise<PortfolioCollaborator | undefined> {
-    const [updated] = await db
-      .update(portfolioCollaborators)
-      .set({ role })
-      .where(eq(portfolioCollaborators.id, collaborationId))
-      .returning();
-    return updated;
-  }
-  
-  async removeCollaborator(collaborationId: string): Promise<boolean> {
-    const result = await db
-      .delete(portfolioCollaborators)
-      .where(eq(portfolioCollaborators.id, collaborationId));
-    return result.rowCount! > 0;
-  }
-  
-  async acceptCollaboration(collaborationId: string): Promise<PortfolioCollaborator | undefined> {
-    const [updated] = await db
-      .update(portfolioCollaborators)
-      .set({ 
-        status: 'accepted',
-        acceptedAt: sql`CURRENT_TIMESTAMP`
-      })
-      .where(eq(portfolioCollaborators.id, collaborationId))
-      .returning();
-    return updated;
-  }
-  
-  async declineCollaboration(collaborationId: string): Promise<boolean> {
-    const [updated] = await db
-      .update(portfolioCollaborators)
-      .set({ status: 'declined' })
-      .where(eq(portfolioCollaborators.id, collaborationId))
-      .returning();
-    return !!updated;
-  }
-  
-  async getUserPortfolioAccess(userId: string, portfolioId: string): Promise<{ role: CollaborationRole; isOwner: boolean } | null> {
-    // Check if user is owner
-    const [portfolio] = await db
-      .select({ userId: portfolios.userId })
-      .from(portfolios)
-      .where(eq(portfolios.id, portfolioId));
-    
-    if (portfolio?.userId === userId) {
-      return { role: 'owner' as CollaborationRole, isOwner: true };
-    }
-    
-    // Check if user is collaborator
-    const [collaboration] = await db
-      .select({ role: portfolioCollaborators.role })
-      .from(portfolioCollaborators)
-      .where(
-        and(
-          eq(portfolioCollaborators.portfolioId, portfolioId),
-          eq(portfolioCollaborators.userId, userId),
-          eq(portfolioCollaborators.status, 'accepted')
-        )
-      );
-    
-    if (collaboration) {
-      return { role: collaboration.role as CollaborationRole, isOwner: false };
-    }
-    
-    return null;
-  }
-  
-  async getAllUserPortfolios(userId: string): Promise<Portfolio[]> {
-    // Get owned portfolios
-    const ownedPortfolios = await db
-      .select()
-      .from(portfolios)
-      .where(eq(portfolios.userId, userId));
-    
-    // Get collaborated portfolios
-    const collaboratedPortfolios = await db
-      .select({
-        id: portfolios.id,
-        name: portfolios.name,
-        userId: portfolios.userId,
-        startDate: portfolios.startDate,
-        createdAt: portfolios.createdAt,
-        updatedAt: portfolios.updatedAt,
-        isArchived: portfolios.isArchived,
-      })
-      .from(portfolios)
-      .innerJoin(portfolioCollaborators, eq(portfolios.id, portfolioCollaborators.portfolioId))
-      .where(
-        and(
-          eq(portfolioCollaborators.userId, userId),
-          eq(portfolioCollaborators.status, 'accepted')
-        )
-      );
-    
-    // Combine and deduplicate
-    const allPortfolios = [...ownedPortfolios, ...collaboratedPortfolios];
-    const uniquePortfolios = allPortfolios.filter((portfolio, index, self) => 
-      index === self.findIndex(p => p.id === portfolio.id)
-    );
-    
-    return uniquePortfolios;
-  }
-  
-  // Notifications
-  async createNotification(notification: InsertNotification): Promise<Notification> {
-    const [newNotification] = await db
-      .insert(notifications)
-      .values(notification)
-      .returning();
-    return newNotification;
-  }
-  
-  async getUserNotifications(userId: string): Promise<Notification[]> {
-    return await db
-      .select()
-      .from(notifications)
-      .where(eq(notifications.userId, userId))
-      .orderBy(desc(notifications.createdAt));
-  }
-  
-  async markNotificationAsRead(notificationId: string): Promise<boolean> {
-    const result = await db
-      .update(notifications)
-      .set({ isRead: true })
-      .where(eq(notifications.id, notificationId));
-    
-    return (result.rowCount ?? 0) > 0;
-  }
-  
-  async deleteNotification(notificationId: string): Promise<boolean> {
-    const result = await db
-      .delete(notifications)
-      .where(eq(notifications.id, notificationId));
-    
-    return (result.rowCount ?? 0) > 0;
+    return result.rowCount > 0;
   }
 }
 

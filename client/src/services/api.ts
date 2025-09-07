@@ -23,6 +23,13 @@ export const api = {
     get: () => apiRequest("GET", "/api/settings"),
     update: (data: any) => apiRequest("PUT", "/api/settings", data),
   },
+  notifications: {
+    list: () => apiRequest("GET", "/api/notifications"),
+    markAsRead: (id: string) => apiRequest("PATCH", `/api/notifications/${id}/read`),
+    delete: (id: string) => apiRequest("DELETE", `/api/notifications/${id}`),
+    acceptCollaboration: (id: string) => apiRequest("POST", `/api/notifications/${id}/accept-collaboration`),
+    declineCollaboration: (id: string) => apiRequest("POST", `/api/notifications/${id}/decline-collaboration`),
+  },
   utils: {
     getRiskTable: () => apiRequest("GET", "/api/risks/table"),
     getHolidays: () => apiRequest("GET", "/api/holidays/2025"),

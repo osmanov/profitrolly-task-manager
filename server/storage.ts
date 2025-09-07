@@ -5,6 +5,7 @@ import {
   systemSettings,
   teams,
   portfolioCollaborators,
+  notifications,
   type User,
   type InsertUser,
   type Portfolio,
@@ -19,6 +20,8 @@ import {
   type PortfolioCollaborator,
   type InsertPortfolioCollaborator,
   type CollaborationRole,
+  type Notification,
+  type InsertNotification,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, or, like, not, inArray, sql } from "drizzle-orm";
@@ -67,6 +70,12 @@ export interface IStorage {
   declineCollaboration(collaborationId: string): Promise<boolean>;
   getUserPortfolioAccess(userId: string, portfolioId: string): Promise<{ role: CollaborationRole; isOwner: boolean } | null>;
   getAllUserPortfolios(userId: string): Promise<Portfolio[]>;
+  
+  // Notifications
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  getUserNotifications(userId: string): Promise<Notification[]>;
+  markNotificationAsRead(notificationId: string): Promise<boolean>;
+  deleteNotification(notificationId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -454,6 +463,40 @@ export class DatabaseStorage implements IStorage {
     );
     
     return uniquePortfolios;
+  }
+  
+  // Notifications
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const [newNotification] = await db
+      .insert(notifications)
+      .values(notification)
+      .returning();
+    return newNotification;
+  }
+  
+  async getUserNotifications(userId: string): Promise<Notification[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+  }
+  
+  async markNotificationAsRead(notificationId: string): Promise<boolean> {
+    const result = await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.id, notificationId));
+    
+    return (result.rowCount ?? 0) > 0;
+  }
+  
+  async deleteNotification(notificationId: string): Promise<boolean> {
+    const result = await db
+      .delete(notifications)
+      .where(eq(notifications.id, notificationId));
+    
+    return (result.rowCount ?? 0) > 0;
   }
 }
 

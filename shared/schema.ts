@@ -191,6 +191,8 @@ export type Team = typeof teams.$inferSelect;
 export type InsertTeam = z.infer<typeof insertTeamSchema>;
 export type PortfolioCollaborator = typeof portfolioCollaborators.$inferSelect;
 export type InsertPortfolioCollaborator = z.infer<typeof insertPortfolioCollaboratorSchema>;
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
 // Login schema
 export const loginSchema = z.object({

@@ -17,7 +17,7 @@ import {
   type PortfolioWithTasks,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc, or, ilike } from "drizzle-orm";
+import { eq, and, desc, asc } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -26,10 +26,9 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByUsernameOrEmail(usernameOrEmail: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  searchUsers(query: string): Promise<User[]>;
   
-  // Portfolios (all portfolios are now public to all users)
-  getAllPortfolios(): Promise<Portfolio[]>;
+  // Portfolios
+  getPortfolios(userId: string): Promise<Portfolio[]>;
   getPortfolio(id: string): Promise<Portfolio | undefined>;
   getPortfolioWithTasks(id: string): Promise<PortfolioWithTasks | undefined>;
   createPortfolio(portfolio: InsertPortfolio & { userId: string }): Promise<Portfolio>;
@@ -95,38 +94,11 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async searchUsers(query: string): Promise<User[]> {
-    return await db
-      .select({
-        id: users.id,
-        username: users.username,
-        fullName: users.fullName,
-        email: users.email,
-        role: users.role,
-        createdAt: users.createdAt,
-        isActive: users.isActive,
-        passwordHash: users.passwordHash,
-      })
-      .from(users)
-      .where(
-        and(
-          eq(users.isActive, true),
-          or(
-            ilike(users.username, `%${query}%`),
-            ilike(users.fullName, `%${query}%`),
-            ilike(users.email, `%${query}%`)
-          )
-        )
-      )
-      .limit(10);
-  }
-
-  // All portfolios are now public - any authenticated user can see them
-  async getAllPortfolios(): Promise<Portfolio[]> {
+  async getPortfolios(userId: string): Promise<Portfolio[]> {
     return await db
       .select()
       .from(portfolios)
-      .where(eq(portfolios.isArchived, false))
+      .where(and(eq(portfolios.userId, userId), eq(portfolios.isArchived, false)))
       .orderBy(desc(portfolios.createdAt));
   }
 
@@ -158,9 +130,7 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(users, eq(portfolios.userId, users.id))
       .where(eq(portfolios.id, id));
 
-    if (!portfolio || !portfolio.user) {
-      return undefined;
-    }
+    if (!portfolio) return undefined;
 
     const portfolioTasks = await db
       .select()
@@ -170,33 +140,33 @@ export class DatabaseStorage implements IStorage {
 
     return {
       ...portfolio,
-      user: portfolio.user,
       tasks: portfolioTasks,
+      user: portfolio.user!,
     };
   }
 
-  async createPortfolio(portfolioData: InsertPortfolio & { userId: string }): Promise<Portfolio> {
-    const [portfolio] = await db
+  async createPortfolio(portfolio: InsertPortfolio & { userId: string }): Promise<Portfolio> {
+    const [newPortfolio] = await db
       .insert(portfolios)
-      .values(portfolioData)
+      .values(portfolio)
       .returning();
-    return portfolio;
+    return newPortfolio;
   }
 
-  async updatePortfolio(id: string, portfolioData: Partial<InsertPortfolio>): Promise<Portfolio | undefined> {
-    const [portfolio] = await db
+  async updatePortfolio(id: string, portfolio: Partial<InsertPortfolio>): Promise<Portfolio | undefined> {
+    const [updated] = await db
       .update(portfolios)
-      .set(portfolioData)
+      .set({ ...portfolio, updatedAt: new Date() })
       .where(eq(portfolios.id, id))
       .returning();
-    return portfolio;
+    return updated;
   }
 
   async deletePortfolio(id: string): Promise<boolean> {
     const result = await db
       .delete(portfolios)
       .where(eq(portfolios.id, id));
-    return (result.rowCount ?? 0) > 0;
+    return result.rowCount! > 0;
   }
 
   async getTasks(portfolioId: string): Promise<Task[]> {
@@ -215,28 +185,28 @@ export class DatabaseStorage implements IStorage {
     return task;
   }
 
-  async createTask(taskData: InsertTask & { portfolioId: string }): Promise<Task> {
-    const [task] = await db
+  async createTask(task: InsertTask & { portfolioId: string }): Promise<Task> {
+    const [newTask] = await db
       .insert(tasks)
-      .values(taskData)
+      .values(task)
       .returning();
-    return task;
+    return newTask;
   }
 
-  async updateTask(id: string, taskData: Partial<InsertTask>): Promise<Task | undefined> {
-    const [task] = await db
+  async updateTask(id: string, task: Partial<InsertTask>): Promise<Task | undefined> {
+    const [updated] = await db
       .update(tasks)
-      .set(taskData)
+      .set(task)
       .where(eq(tasks.id, id))
       .returning();
-    return task;
+    return updated;
   }
 
   async deleteTask(id: string): Promise<boolean> {
     const result = await db
       .delete(tasks)
       .where(eq(tasks.id, id));
-    return (result.rowCount ?? 0) > 0;
+    return result.rowCount! > 0;
   }
 
   async getSystemSettings(): Promise<SystemSettings | undefined> {
@@ -248,12 +218,12 @@ export class DatabaseStorage implements IStorage {
     return settings;
   }
 
-  async updateSystemSettings(settingsData: InsertSystemSettings & { updatedBy: string }): Promise<SystemSettings> {
-    const [settings] = await db
+  async updateSystemSettings(settings: InsertSystemSettings & { updatedBy: string }): Promise<SystemSettings> {
+    const [updated] = await db
       .insert(systemSettings)
-      .values(settingsData)
+      .values(settings)
       .returning();
-    return settings;
+    return updated;
   }
 
   async getTeams(): Promise<Team[]> {
@@ -271,28 +241,28 @@ export class DatabaseStorage implements IStorage {
       .orderBy(asc(teams.name));
   }
 
-  async createTeam(teamData: InsertTeam): Promise<Team> {
-    const [team] = await db
+  async createTeam(team: InsertTeam): Promise<Team> {
+    const [newTeam] = await db
       .insert(teams)
-      .values(teamData)
+      .values(team)
       .returning();
-    return team;
+    return newTeam;
   }
 
-  async updateTeam(id: string, teamData: Partial<InsertTeam>): Promise<Team | undefined> {
-    const [team] = await db
+  async updateTeam(id: string, team: Partial<InsertTeam>): Promise<Team | undefined> {
+    const [updated] = await db
       .update(teams)
-      .set(teamData)
+      .set(team)
       .where(eq(teams.id, id))
       .returning();
-    return team;
+    return updated;
   }
 
   async deleteTeam(id: string): Promise<boolean> {
     const result = await db
       .delete(teams)
       .where(eq(teams.id, id));
-    return (result.rowCount ?? 0) > 0;
+    return result.rowCount! > 0;
   }
 }
 

@@ -7,16 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CollaborativeInput } from "@/components/ui/collaborative-input";
-import { X, Plus, Users } from "lucide-react";
+import { X, Plus } from "lucide-react";
 import TaskBlock from "./TaskBlock";
 import SummaryDisplay from "../calculations/SummaryDisplay";
 import { usePortfolio, useCreatePortfolio, useUpdatePortfolio, useCreateTask } from "@/hooks/usePortfolio";
-import { useWebSocket } from "@/hooks/useWebSocket";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useUnsavedChangesContext } from "@/contexts/UnsavedChangesContext";
-import { useAuth } from "@/hooks/useAuth";
 import type { CreatePortfolioData, CreateTaskData } from "@/types/portfolio";
 
 const portfolioSchema = z.object({
@@ -34,8 +31,6 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
   const [pendingNavigation, setPendingNavigation] = useState<string>("");
   const [isInitialized, setIsInitialized] = useState(false);
   const { hasUnsavedChanges, setHasUnsavedChanges } = useUnsavedChangesContext();
-  const { user } = useAuth();
-  const { joinPortfolio, isConnected, notifyTaskAdded, notifyTaskDeleted } = useWebSocket();
   
   const markAsChanged = () => {
     if (isInitialized) {
@@ -122,18 +117,13 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
         })));
       }
       
-      // Join WebSocket room for real-time collaboration
-      if (portfolioId && isConnected) {
-        joinPortfolio(portfolioId);
-      }
-      
       // Mark as initialized after loading data
       setTimeout(() => setIsInitialized(true), 100);
     } else if (!isEditing) {
       // For new portfolios, initialize immediately
       setIsInitialized(true);
     }
-  }, [portfolio, isEditing, setValue, portfolioId, isConnected, joinPortfolio]);
+  }, [portfolio, isEditing, setValue]);
   
   // Clear unsaved changes when component unmounts or portfolio ID changes
   useEffect(() => {
@@ -162,33 +152,21 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
   }, [isEditing, setValue, setHasUnsavedChanges]);
 
   const addTask = () => {
-    const newTask = {
+    setTasks([...tasks, {
       title: "",
       description: "",
       team: "frontend",
       days: 1,
       parallelGroup: undefined,
       orderIndex: tasks.length,
-    };
-    setTasks([...tasks, newTask]);
+    }]);
     markAsChanged();
-    
-    // Notify other users about task addition in real-time
-    if (isEditing && portfolioId) {
-      notifyTaskAdded(portfolioId, newTask);
-    }
   };
 
   const removeTask = (index: number) => {
     if (tasks.length > 1) {
-      const removedTask = tasks[index];
       setTasks(tasks.filter((_, i) => i !== index));
       markAsChanged();
-      
-      // Notify other users about task removal in real-time
-      if (isEditing && portfolioId && removedTask) {
-        notifyTaskDeleted(portfolioId, index.toString());
-      }
     }
   };
 
@@ -197,9 +175,6 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
     newTasks[index] = task;
     setTasks(newTasks);
     markAsChanged();
-    
-    // Real-time updates are handled by CollaborativeInput in individual fields
-    // No need to notify here as field changes are already handled by CollaborativeInput
   };
 
   const onSubmit = async (data: CreatePortfolioData) => {
@@ -316,46 +291,19 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
         <div className="lg:col-span-2 order-2 lg:order-1">
           <Card className="shadow-xl border-t-4 border-t-blue-600 bg-blue-50">
             <CardHeader className="bg-blue-100">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-blue-700 font-bold">Детали Portfolio</CardTitle>
-                {isEditing && (
-                  <div className="flex items-center space-x-2">
-                    <Users className="h-4 w-4 text-green-600" />
-                    <span className="text-sm text-green-600 font-medium">
-                      Совместное редактирование
-                    </span>
-                    {isConnected && (
-                      <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    )}
-                  </div>
-                )}
-              </div>
+              <CardTitle className="text-blue-700 font-bold">Детали Portfolio</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 {/* Portfolio Name */}
                 <div>
                   <Label htmlFor="name">Название Portfolio</Label>
-                  {isEditing && portfolioId ? (
-                    <CollaborativeInput
-                      portfolioId={portfolioId}
-                      fieldId="name"
-                      value={watchedValues.name || ""}
-                      onChange={(value) => {
-                        setValue("name", value);
-                        markAsChanged();
-                      }}
-                      placeholder="Введите название портфолио"
-                      data-testid="input-portfolio-name"
-                    />
-                  ) : (
-                    <Input
-                      id="name"
-                      placeholder="Введите название портфолио"
-                      {...register("name")}
-                      data-testid="input-portfolio-name"
-                    />
-                  )}
+                  <Input
+                    id="name"
+                    placeholder="Введите название портфолио"
+                    {...register("name")}
+                    data-testid="input-portfolio-name"
+                  />
                   {errors.name && (
                     <p className="text-sm text-destructive mt-1">{errors.name.message}</p>
                   )}
@@ -364,27 +312,12 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
                 {/* Start Date */}
                 <div>
                   <Label htmlFor="startDate">Дата начала</Label>
-                  {isEditing && portfolioId ? (
-                    <CollaborativeInput
-                      portfolioId={portfolioId}
-                      fieldId="startDate"
-                      value={watchedValues.startDate || ""}
-                      onChange={(value) => {
-                        setValue("startDate", value);
-                        markAsChanged();
-                      }}
-                      type="input"
-                      inputType="date"
-                      data-testid="input-start-date"
-                    />
-                  ) : (
-                    <Input
-                      id="startDate"
-                      type="date"
-                      {...register("startDate")}
-                      data-testid="input-start-date"
-                    />
-                  )}
+                  <Input
+                    id="startDate"
+                    type="date"
+                    {...register("startDate")}
+                    data-testid="input-start-date"
+                  />
                   {errors.startDate && (
                     <p className="text-sm text-destructive mt-1">{errors.startDate.message}</p>
                   )}
@@ -414,8 +347,6 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
                       onUpdate={updateTask}
                       onRemove={removeTask}
                       canRemove={tasks.length > 1}
-                      portfolioId={portfolioId}
-                      isEditing={isEditing}
                     />
                   ))}
                 </div>
@@ -448,7 +379,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
         </div>
 
         {/* Calculations Sidebar */}
-        <div className="lg:col-span-1 order-1 lg:order-2 space-y-6">
+        <div className="lg:col-span-1 order-1 lg:order-2">
           <SummaryDisplay
             tasks={tasks}
             portfolioName={watchedValues.name || ""}

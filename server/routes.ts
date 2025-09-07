@@ -55,6 +55,363 @@ const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
 };
 
 export function registerRoutes(app: Express): Server {
+  // Auth routes
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const userData = insertUserSchema.parse(req.body);
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByUsername(userData.username);
+      if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+
+      const existingEmail = await storage.getUserByEmail(userData.email);
+      if (existingEmail) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      
+      const user = await storage.createUser({
+        ...userData,
+        password: hashedPassword,
+      });
+
+      const token = jwt.sign(
+        { id: user.id, username: user.username, role: user.role },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN }
+      );
+
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          fullName: user.fullName,
+          role: user.role,
+        },
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { usernameOrEmail, password } = loginSchema.parse(req.body);
+      
+      const user = await storage.getUserByUsernameOrEmail(usernameOrEmail);
+      if (!user || !user.isActive) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      const token = jwt.sign(
+        { id: user.id, username: user.username, role: user.role },
+        JWT_SECRET,
+        { expiresIn: JWT_EXPIRES_IN }
+      );
+
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          fullName: user.fullName,
+          role: user.role,
+        },
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/auth/me", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const user = await storage.getUser(req.user!.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Portfolio routes
+  app.get("/api/portfolios", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const portfolios = await storage.getPortfolios(req.user!.id);
+      res.json(portfolios);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/portfolios/:id", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const portfolio = await storage.getPortfolioWithTasks(req.params.id);
+      if (!portfolio) {
+        return res.status(404).json({ message: "Portfolio not found" });
+      }
+
+      // Check if user owns the portfolio or is admin
+      if (portfolio.userId !== req.user!.id && req.user!.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      res.json(portfolio);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/portfolios", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const portfolioData = insertPortfolioSchema.parse(req.body);
+      const portfolio = await storage.createPortfolio({
+        ...portfolioData,
+        userId: req.user!.id,
+      });
+
+      res.status(201).json(portfolio);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/portfolios/:id", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const portfolio = await storage.getPortfolio(req.params.id);
+      if (!portfolio) {
+        return res.status(404).json({ message: "Portfolio not found" });
+      }
+
+      // Check if user owns the portfolio or is admin
+      if (portfolio.userId !== req.user!.id && req.user!.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const portfolioData = insertPortfolioSchema.partial().parse(req.body);
+      const updated = await storage.updatePortfolio(req.params.id, portfolioData);
+
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/portfolios/:id", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const portfolio = await storage.getPortfolio(req.params.id);
+      if (!portfolio) {
+        return res.status(404).json({ message: "Portfolio not found" });
+      }
+
+      // Check if user owns the portfolio or is admin
+      if (portfolio.userId !== req.user!.id && req.user!.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const success = await storage.deletePortfolio(req.params.id);
+      if (success) {
+        res.json({ message: "Portfolio deleted successfully" });
+      } else {
+        res.status(400).json({ message: "Failed to delete portfolio" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Task routes
+  app.get("/api/portfolios/:id/tasks", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const portfolio = await storage.getPortfolio(req.params.id);
+      if (!portfolio) {
+        return res.status(404).json({ message: "Portfolio not found" });
+      }
+
+      // Check if user owns the portfolio or is admin
+      if (portfolio.userId !== req.user!.id && req.user!.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const tasks = await storage.getTasks(req.params.id);
+      res.json(tasks);
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/portfolios/:id/tasks", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const portfolio = await storage.getPortfolio(req.params.id);
+      if (!portfolio) {
+        return res.status(404).json({ message: "Portfolio not found" });
+      }
+
+      // Check if user owns the portfolio or is admin
+      if (portfolio.userId !== req.user!.id && req.user!.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const taskData = insertTaskSchema.parse(req.body);
+      const task = await storage.createTask({
+        ...taskData,
+        portfolioId: req.params.id,
+      });
+
+      res.status(201).json(task);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/tasks/:id", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const task = await storage.getTask(req.params.id);
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      const portfolio = await storage.getPortfolio(task.portfolioId);
+      if (!portfolio) {
+        return res.status(404).json({ message: "Portfolio not found" });
+      }
+
+      // Check if user owns the portfolio or is admin
+      if (portfolio.userId !== req.user!.id && req.user!.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const taskData = insertTaskSchema.partial().parse(req.body);
+      const updated = await storage.updateTask(req.params.id, taskData);
+
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/tasks/:id", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      const task = await storage.getTask(req.params.id);
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      const portfolio = await storage.getPortfolio(task.portfolioId);
+      if (!portfolio) {
+        return res.status(404).json({ message: "Portfolio not found" });
+      }
+
+      // Check if user owns the portfolio or is admin
+      if (portfolio.userId !== req.user!.id && req.user!.role !== "admin") {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const success = await storage.deleteTask(req.params.id);
+      if (success) {
+        res.json({ message: "Task deleted successfully" });
+      } else {
+        res.status(400).json({ message: "Failed to delete task" });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Settings routes (admin only)
+  app.get("/api/settings", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      const settings = await storage.getSystemSettings();
+      res.json(settings || { maxDaysPerTask: 3 });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/settings", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      const settingsData = insertSystemSettingsSchema.parse(req.body);
+      const settings = await storage.updateSystemSettings({
+        ...settingsData,
+        updatedBy: req.user!.id,
+      });
+
+      res.json(settings);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Utility routes
+  app.get("/api/risks/table", (req, res) => {
+    const riskTable = [
+      { totalDays: 2, riskDays: 1 },
+      { totalDays: "3-7", riskDays: 2 },
+      { totalDays: "8-12", riskDays: 3 },
+      { totalDays: "13-17", riskDays: 4 },
+      { totalDays: "18-22", riskDays: 5 },
+      { totalDays: "23-27", riskDays: 6 },
+      { totalDays: "28-30", riskDays: 7 },
+      { totalDays: "30+", riskDays: 7 },
+    ];
+    res.json(riskTable);
+  });
+
+  app.get("/api/holidays/2025", (req, res) => {
+    const holidays = [
+      "2025-01-01", "2025-01-02", "2025-01-03", "2025-01-04", "2025-01-05", "2025-01-06", "2025-01-07", "2025-01-08",
+      "2025-02-22", "2025-02-23",
+      "2025-03-08", "2025-03-09",
+      "2025-05-01", "2025-05-02", "2025-05-03", "2025-05-04",
+      "2025-05-08", "2025-05-09", "2025-05-10", "2025-05-11",
+      "2025-06-12", "2025-06-13", "2025-06-14", "2025-06-15",
+      "2025-11-02", "2025-11-03", "2025-11-04",
+      "2025-12-31",
+    ];
+    res.json(holidays);
+  });
+
   const httpServer = createServer(app);
   
   // WebSocket server for real-time collaboration
@@ -206,349 +563,6 @@ export function registerRoutes(app: Express): Server {
       console.error('WebSocket error:', error);
     });
   });
-
-  // Health check
-  app.get("/api/health", (req, res) => {
-    res.json({ status: "ok", timestamp: new Date().toISOString() });
-  });
-
-  // Auth routes
-  app.post("/api/auth/register", async (req, res) => {
-    try {
-      const userData = insertUserSchema.parse(req.body);
-      const hashedPassword = await bcrypt.hash(userData.password, 10);
-      
-      const user = await storage.createUser({
-        ...userData,
-        password: hashedPassword,
-      });
-
-      const token = jwt.sign(
-        { id: user.id, username: user.username },
-        JWT_SECRET,
-        { expiresIn: JWT_EXPIRES_IN }
-      );
-
-      res.status(201).json({
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          fullName: user.fullName,
-          role: user.role,
-        },
-        token,
-      });
-    } catch (error: any) {
-      if (error.code === '23505') {
-        res.status(400).json({ message: "Username or email already exists" });
-      } else {
-        console.error("Registration error:", error);
-        res.status(400).json({ message: error.message || "Registration failed" });
-      }
-    }
-  });
-
-  app.post("/api/auth/login", async (req, res) => {
-    try {
-      const { usernameOrEmail, password } = loginSchema.parse(req.body);
-      const user = await storage.getUserByUsernameOrEmail(usernameOrEmail);
-
-      if (!user || !user.isActive) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-
-      const isValidPassword = await bcrypt.compare(password, user.passwordHash);
-      if (!isValidPassword) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-
-      const token = jwt.sign(
-        { id: user.id, username: user.username },
-        JWT_SECRET,
-        { expiresIn: JWT_EXPIRES_IN }
-      );
-
-      res.json({
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          fullName: user.fullName,
-          role: user.role,
-        },
-        token,
-      });
-    } catch (error: any) {
-      console.error("Login error:", error);
-      res.status(400).json({ message: error.message || "Login failed" });
-    }
-  });
-
-  app.get("/api/auth/me", authenticateToken, async (req: AuthRequest, res) => {
-    try {
-      const user = await storage.getUser(req.user!.id);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      res.json({
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        fullName: user.fullName,
-        role: user.role,
-      });
-    } catch (error) {
-      console.error("Get user error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Portfolio routes - All portfolios are now public and accessible to all authenticated users
-  app.get("/api/portfolios", authenticateToken, async (req: AuthRequest, res) => {
-    try {
-      const portfolios = await storage.getAllPortfolios();
-      res.json(portfolios);
-    } catch (error) {
-      console.error("Get portfolios error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.get("/api/portfolios/:id", authenticateToken, async (req: AuthRequest, res) => {
-    try {
-      const portfolio = await storage.getPortfolioWithTasks(req.params.id);
-      if (!portfolio) {
-        return res.status(404).json({ message: "Portfolio not found" });
-      }
-      res.json(portfolio);
-    } catch (error) {
-      console.error("Get portfolio error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.post("/api/portfolios", authenticateToken, async (req: AuthRequest, res) => {
-    try {
-      const portfolioData = insertPortfolioSchema.parse(req.body);
-      const portfolio = await storage.createPortfolio({
-        ...portfolioData,
-        userId: req.user!.id,
-      });
-      res.status(201).json(portfolio);
-    } catch (error: any) {
-      console.error("Create portfolio error:", error);
-      res.status(400).json({ message: error.message || "Failed to create portfolio" });
-    }
-  });
-
-  app.patch("/api/portfolios/:id", authenticateToken, async (req: AuthRequest, res) => {
-    try {
-      const portfolioData = insertPortfolioSchema.partial().parse(req.body);
-      
-      // Check if user is the owner or allow all authenticated users to edit
-      const existingPortfolio = await storage.getPortfolio(req.params.id);
-      if (!existingPortfolio) {
-        return res.status(404).json({ message: "Portfolio not found" });
-      }
-
-      const portfolio = await storage.updatePortfolio(req.params.id, portfolioData);
-      if (!portfolio) {
-        return res.status(404).json({ message: "Portfolio not found" });
-      }
-
-      // Broadcast changes via WebSocket
-      const connections = portfolioConnections.get(req.params.id);
-      if (connections) {
-        connections.forEach(client => {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({
-              type: 'portfolio_changed',
-              portfolioId: req.params.id,
-              data: portfolio
-            }));
-          }
-        });
-      }
-
-      res.json(portfolio);
-    } catch (error: any) {
-      console.error("Update portfolio error:", error);
-      res.status(400).json({ message: error.message || "Failed to update portfolio" });
-    }
-  });
-
-  app.delete("/api/portfolios/:id", authenticateToken, async (req: AuthRequest, res) => {
-    try {
-      // Check if user is the owner or admin
-      const portfolio = await storage.getPortfolio(req.params.id);
-      if (!portfolio) {
-        return res.status(404).json({ message: "Portfolio not found" });
-      }
-
-      if (portfolio.userId !== req.user!.id && req.user!.role !== "admin") {
-        return res.status(403).json({ message: "Only the owner or admin can delete this portfolio" });
-      }
-
-      const success = await storage.deletePortfolio(req.params.id);
-      if (!success) {
-        return res.status(404).json({ message: "Portfolio not found" });
-      }
-
-      res.json({ message: "Portfolio deleted successfully" });
-    } catch (error) {
-      console.error("Delete portfolio error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Task routes
-  app.get("/api/portfolios/:portfolioId/tasks", authenticateToken, async (req: AuthRequest, res) => {
-    try {
-      const tasks = await storage.getTasks(req.params.portfolioId);
-      res.json(tasks);
-    } catch (error) {
-      console.error("Get tasks error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.post("/api/portfolios/:portfolioId/tasks", authenticateToken, async (req: AuthRequest, res) => {
-    try {
-      const taskData = insertTaskSchema.parse(req.body);
-      const task = await storage.createTask({
-        ...taskData,
-        portfolioId: req.params.portfolioId,
-      });
-      
-      // Broadcast new task via WebSocket
-      const connections = portfolioConnections.get(req.params.portfolioId);
-      if (connections) {
-        connections.forEach(client => {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({
-              type: 'task_added',
-              portfolioId: req.params.portfolioId,
-              data: task
-            }));
-          }
-        });
-      }
-      
-      res.status(201).json(task);
-    } catch (error: any) {
-      console.error("Create task error:", error);
-      res.status(400).json({ message: error.message || "Failed to create task" });
-    }
-  });
-
-  app.patch("/api/tasks/:id", authenticateToken, async (req: AuthRequest, res) => {
-    try {
-      const taskData = insertTaskSchema.partial().parse(req.body);
-      const task = await storage.updateTask(req.params.id, taskData);
-      if (!task) {
-        return res.status(404).json({ message: "Task not found" });
-      }
-      
-      // Broadcast task changes via WebSocket
-      const connections = portfolioConnections.get(task.portfolioId);
-      if (connections) {
-        connections.forEach(client => {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify({
-              type: 'task_changed',
-              portfolioId: task.portfolioId,
-              taskId: task.id,
-              data: task
-            }));
-          }
-        });
-      }
-      
-      res.json(task);
-    } catch (error: any) {
-      console.error("Update task error:", error);
-      res.status(400).json({ message: error.message || "Failed to update task" });
-    }
-  });
-
-  app.delete("/api/tasks/:id", authenticateToken, async (req: AuthRequest, res) => {
-    try {
-      // Get task before deletion to know which portfolio to broadcast to
-      const task = await storage.getTask(req.params.id);
-      const success = await storage.deleteTask(req.params.id);
-      if (!success) {
-        return res.status(404).json({ message: "Task not found" });
-      }
-      
-      // Broadcast task deletion via WebSocket
-      if (task) {
-        const connections = portfolioConnections.get(task.portfolioId);
-        if (connections) {
-          connections.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify({
-                type: 'task_deleted',
-                portfolioId: task.portfolioId,
-                taskId: req.params.id
-              }));
-            }
-          });
-        }
-      }
-      
-      res.json({ message: "Task deleted successfully" });
-    } catch (error) {
-      console.error("Delete task error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // User search routes (for future features)
-  app.get("/api/users/search", authenticateToken, async (req: AuthRequest, res) => {
-    try {
-      const { q } = req.query;
-      if (!q || typeof q !== 'string' || q.length < 2) {
-        return res.json([]);
-      }
-
-      const users = await storage.searchUsers(q);
-      res.json(users.map(user => ({
-        id: user.id,
-        username: user.username,
-        fullName: user.fullName
-      })));
-    } catch (error) {
-      console.error("Search users error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // System settings routes (admin only)
-  app.get("/api/settings", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
-    try {
-      const settings = await storage.getSystemSettings();
-      res.json(settings || { maxDaysPerTask: 3 });
-    } catch (error) {
-      console.error("Get settings error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.patch("/api/settings", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
-    try {
-      const settingsData = insertSystemSettingsSchema.parse(req.body);
-      const settings = await storage.updateSystemSettings({
-        ...settingsData,
-        updatedBy: req.user!.id,
-      });
-      res.json(settings);
-    } catch (error: any) {
-      console.error("Update settings error:", error);
-      res.status(400).json({ message: error.message || "Failed to update settings" });
-    }
-  });
-
+  
   return httpServer;
 }

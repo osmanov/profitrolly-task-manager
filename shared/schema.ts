@@ -1,9 +1,7 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, timestamp, date, uuid, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, timestamp, date, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
-
-// Enums
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -52,7 +50,6 @@ export const tasks = pgTable("tasks", {
   createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
-
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   portfolios: many(portfolios),
@@ -80,7 +77,6 @@ export const systemSettingsRelations = relations(systemSettings, ({ one }) => ({
     references: [users.id],
   }),
 }));
-
 
 // Schemas
 export const insertUserSchema = createInsertSchema(users).omit({

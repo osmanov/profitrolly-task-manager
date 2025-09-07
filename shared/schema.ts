@@ -1,7 +1,10 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, timestamp, date, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, timestamp, date, uuid, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Enums
+export const collaboratorRoleEnum = pgEnum('collaborator_role', ['owner', 'editor', 'viewer']);
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -50,10 +53,25 @@ export const tasks = pgTable("tasks", {
   createdAt: timestamp("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
+export const portfolioCollaborators = pgTable("portfolio_collaborators", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  portfolioId: uuid("portfolio_id").notNull().references(() => portfolios.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  role: collaboratorRoleEnum("role").notNull(),
+  invitedBy: uuid("invited_by").notNull().references(() => users.id),
+  invitedAt: timestamp("invited_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  acceptedAt: timestamp("accepted_at"),
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, accepted, declined
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   portfolios: many(portfolios),
   systemSettings: many(systemSettings),
+  portfolioCollaborations: many(portfolioCollaborators),
+  invitedCollaborations: many(portfolioCollaborators, {
+    relationName: "invitedBy"
+  }),
 }));
 
 export const portfoliosRelations = relations(portfolios, ({ one, many }) => ({
@@ -62,6 +80,7 @@ export const portfoliosRelations = relations(portfolios, ({ one, many }) => ({
     references: [users.id],
   }),
   tasks: many(tasks),
+  collaborators: many(portfolioCollaborators),
 }));
 
 export const tasksRelations = relations(tasks, ({ one }) => ({
@@ -75,6 +94,22 @@ export const systemSettingsRelations = relations(systemSettings, ({ one }) => ({
   updatedByUser: one(users, {
     fields: [systemSettings.updatedBy],
     references: [users.id],
+  }),
+}));
+
+export const portfolioCollaboratorsRelations = relations(portfolioCollaborators, ({ one }) => ({
+  portfolio: one(portfolios, {
+    fields: [portfolioCollaborators.portfolioId],
+    references: [portfolios.id],
+  }),
+  user: one(users, {
+    fields: [portfolioCollaborators.userId],
+    references: [users.id],
+  }),
+  inviter: one(users, {
+    fields: [portfolioCollaborators.invitedBy],
+    references: [users.id],
+    relationName: "invitedBy"
   }),
 }));
 
@@ -112,6 +147,12 @@ export const insertTeamSchema = createInsertSchema(teams).omit({
   createdAt: true,
 });
 
+export const insertPortfolioCollaboratorSchema = createInsertSchema(portfolioCollaborators).omit({
+  id: true,
+  invitedAt: true,
+  acceptedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -123,6 +164,8 @@ export type SystemSettings = typeof systemSettings.$inferSelect;
 export type InsertSystemSettings = z.infer<typeof insertSystemSettingsSchema>;
 export type Team = typeof teams.$inferSelect;
 export type InsertTeam = z.infer<typeof insertTeamSchema>;
+export type PortfolioCollaborator = typeof portfolioCollaborators.$inferSelect;
+export type InsertPortfolioCollaborator = z.infer<typeof insertPortfolioCollaboratorSchema>;
 
 // Login schema
 export const loginSchema = z.object({
@@ -132,8 +175,21 @@ export const loginSchema = z.object({
 
 export type LoginData = z.infer<typeof loginSchema>;
 
-// Portfolio with tasks
+// Portfolio with tasks and collaborators
 export type PortfolioWithTasks = Portfolio & {
   tasks: Task[];
   user: Pick<User, 'id' | 'username' | 'fullName'>;
+  collaborators?: Array<PortfolioCollaborator & {
+    user: Pick<User, 'id' | 'username' | 'fullName'>;
+    inviter: Pick<User, 'id' | 'username' | 'fullName'>;
+  }>;
 };
+
+// Collaboration role constants
+export const COLLABORATION_ROLES = {
+  OWNER: 'owner' as const,
+  EDITOR: 'editor' as const,
+  VIEWER: 'viewer' as const,
+} as const;
+
+export type CollaborationRole = typeof COLLABORATION_ROLES[keyof typeof COLLABORATION_ROLES];

@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarInitial } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Users, Crown } from "lucide-react";
 import { usePortfolioCollaborators } from "@/hooks/useCollaboration";
@@ -40,7 +40,7 @@ export default function PortfolioCollaborators({ portfolioId, maxVisible = 3 }: 
     );
   }
 
-  if (!collaborators || collaborators.length === 0) {
+  if (!collaborators || !Array.isArray(collaborators) || collaborators.length === 0) {
     return (
       <div className="flex items-center space-x-1">
         <Users className="h-4 w-4 text-gray-400" />

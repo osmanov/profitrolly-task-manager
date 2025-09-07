@@ -1,23 +1,18 @@
-import { Briefcase, Plus, Settings, Bell } from "lucide-react";
+import { Briefcase, Plus, Settings } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-import { useNotifications } from "@/hooks/useNotifications";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useUnsavedChangesContext } from "@/contexts/UnsavedChangesContext";
 
 export default function Sidebar() {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
-  const { notifications } = useNotifications();
   const isMobile = useIsMobile();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingPath, setPendingPath] = useState("");
   const { hasUnsavedChanges, setHasUnsavedChanges } = useUnsavedChangesContext();
-  
-  const unreadCount = notifications?.filter(n => !n.isRead).length || 0;
   
   const handleNavigateToNew = () => {
     if (hasUnsavedChanges) {
@@ -45,9 +40,6 @@ export default function Sidebar() {
       return true;
     }
     if (path === "/portfolios/new" && location === "/portfolios/new") {
-      return true;
-    }
-    if (path === "/notifications" && location === "/notifications") {
       return true;
     }
     return location === path;
@@ -78,18 +70,6 @@ export default function Sidebar() {
           <Plus className="h-4 w-4 mr-3" />
           Новое Portfolio
         </button>
-        
-        <Link href="/notifications">
-          <button className={linkClass("/notifications")} data-testid="sidebar-notifications">
-            <Bell className="h-4 w-4 mr-3" />
-            Уведомления
-            {unreadCount > 0 && (
-              <Badge className="ml-auto bg-red-500 text-white text-xs px-2 py-1">
-                {unreadCount}
-              </Badge>
-            )}
-          </button>
-        </Link>
 
         {user?.role === "admin" && (
           <>

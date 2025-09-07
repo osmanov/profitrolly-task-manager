@@ -10,7 +10,6 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Portfolios from "./pages/Portfolios";
 import Settings from "./pages/Settings";
-import Notifications from "./pages/Notifications";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import NotFound from "@/pages/not-found";
 
@@ -39,14 +38,6 @@ function Router() {
         <ProtectedRoute>
           <Dashboard>
             <Portfolios />
-          </Dashboard>
-        </ProtectedRoute>
-      </Route>
-      
-      <Route path="/notifications">
-        <ProtectedRoute>
-          <Dashboard>
-            <Notifications />
           </Dashboard>
         </ProtectedRoute>
       </Route>

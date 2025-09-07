@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { X, Plus } from "lucide-react";
 import TaskBlock from "./TaskBlock";
 import SummaryDisplay from "../calculations/SummaryDisplay";
-import CollaborationManager from "../collaboration/CollaborationManager";
 import { usePortfolio, useCreatePortfolio, useUpdatePortfolio, useCreateTask } from "@/hooks/usePortfolio";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -388,15 +387,6 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
             portfolioName={watchedValues.name || ""}
             startDate={watchedValues.startDate || ""}
           />
-          
-          {/* Collaboration Manager - only show for existing portfolios */}
-          {isEditing && portfolio && (
-            <CollaborationManager
-              portfolioId={portfolioId!}
-              portfolioName={portfolio.name}
-              isOwner={portfolio.userId === user?.id}
-            />
-          )}
         </div>
       </div>
       

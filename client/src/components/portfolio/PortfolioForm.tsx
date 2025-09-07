@@ -35,7 +35,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
   const [isInitialized, setIsInitialized] = useState(false);
   const { hasUnsavedChanges, setHasUnsavedChanges } = useUnsavedChangesContext();
   const { user } = useAuth();
-  const { joinPortfolio, isConnected } = useWebSocket();
+  const { joinPortfolio, isConnected, notifyTaskAdded, notifyTaskDeleted } = useWebSocket();
   
   const markAsChanged = () => {
     if (isInitialized) {
@@ -162,21 +162,33 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
   }, [isEditing, setValue, setHasUnsavedChanges]);
 
   const addTask = () => {
-    setTasks([...tasks, {
+    const newTask = {
       title: "",
       description: "",
       team: "frontend",
       days: 1,
       parallelGroup: undefined,
       orderIndex: tasks.length,
-    }]);
+    };
+    setTasks([...tasks, newTask]);
     markAsChanged();
+    
+    // Notify other users about task addition in real-time
+    if (isEditing && portfolioId) {
+      notifyTaskAdded(portfolioId, newTask);
+    }
   };
 
   const removeTask = (index: number) => {
     if (tasks.length > 1) {
+      const removedTask = tasks[index];
       setTasks(tasks.filter((_, i) => i !== index));
       markAsChanged();
+      
+      // Notify other users about task removal in real-time
+      if (isEditing && portfolioId && removedTask) {
+        notifyTaskDeleted(portfolioId, index.toString());
+      }
     }
   };
 
@@ -185,6 +197,9 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
     newTasks[index] = task;
     setTasks(newTasks);
     markAsChanged();
+    
+    // Real-time updates are handled by CollaborativeInput in individual fields
+    // No need to notify here as field changes are already handled by CollaborativeInput
   };
 
   const onSubmit = async (data: CreatePortfolioData) => {

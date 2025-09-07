@@ -168,6 +168,22 @@ export function useWebSocket() {
     });
   }, [sendMessage]);
 
+  const notifyTaskAdded = useCallback((portfolioId: string, task: any) => {
+    sendMessage({
+      type: 'task_added',
+      portfolioId,
+      data: task
+    });
+  }, [sendMessage]);
+
+  const notifyTaskDeleted = useCallback((portfolioId: string, taskId: string) => {
+    sendMessage({
+      type: 'task_deleted',
+      portfolioId,
+      taskId
+    });
+  }, [sendMessage]);
+
   const notifyFieldFocus = useCallback((portfolioId: string, fieldId: string, taskId?: string) => {
     sendMessage({
       type: 'field_focus',
@@ -212,6 +228,8 @@ export function useWebSocket() {
     joinPortfolio,
     notifyPortfolioUpdate,
     notifyTaskUpdate,
+    notifyTaskAdded,
+    notifyTaskDeleted,
     notifyFieldFocus,
     notifyFieldBlur,
     notifyFieldChange,

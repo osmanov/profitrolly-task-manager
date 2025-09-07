@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CollaborativeInput } from "@/components/ui/collaborative-input";
+import { CollaborativeSelect } from "@/components/ui/collaborative-select";
 import type { CreateTaskData } from "@/types/portfolio";
 
 interface TaskBlockProps {
@@ -96,21 +97,38 @@ export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove, 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
             <Label htmlFor={`team-${index}`}>Команда</Label>
-            <Select
-              value={task.team}
-              onValueChange={(value) => handleChange("team", value)}
-            >
-              <SelectTrigger data-testid={`select-team-${index}`}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
+            {isEditing && portfolioId ? (
+              <CollaborativeSelect
+                portfolioId={portfolioId}
+                fieldId="team"
+                taskId={index.toString()}
+                value={task.team}
+                onValueChange={(value) => handleChange("team", value)}
+                data-testid={`select-team-${index}`}
+              >
                 {TEAMS.map((team) => (
                   <SelectItem key={team.value} value={team.value}>
                     {team.label}
                   </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
+              </CollaborativeSelect>
+            ) : (
+              <Select
+                value={task.team}
+                onValueChange={(value) => handleChange("team", value)}
+              >
+                <SelectTrigger data-testid={`select-team-${index}`}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TEAMS.map((team) => (
+                    <SelectItem key={team.value} value={team.value}>
+                      {team.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <div>
@@ -147,26 +165,52 @@ export default function TaskBlock({ task, index, onUpdate, onRemove, canRemove, 
             Параллельная группа
             <span className="text-xs text-muted-foreground ml-1">(опционально)</span>
           </Label>
-          <Input
-            id={`parallel-group-${index}`}
-            placeholder="напр., группа-1"
-            value={task.parallelGroup || ""}
-            onChange={(e) => handleChange("parallelGroup", e.target.value || undefined)}
-            data-testid={`input-parallel-group-${index}`}
-          />
+          {isEditing && portfolioId ? (
+            <CollaborativeInput
+              portfolioId={portfolioId}
+              fieldId="parallelGroup"
+              taskId={index.toString()}
+              value={task.parallelGroup || ""}
+              onChange={(value) => handleChange('parallelGroup', value || undefined)}
+              placeholder="напр., группа-1"
+              data-testid={`input-parallel-group-${index}`}
+            />
+          ) : (
+            <Input
+              id={`parallel-group-${index}`}
+              placeholder="напр., группа-1"
+              value={task.parallelGroup || ""}
+              onChange={(e) => handleChange("parallelGroup", e.target.value || undefined)}
+              data-testid={`input-parallel-group-${index}`}
+            />
+          )}
         </div>
       </div>
 
       <div>
         <Label htmlFor={`description-${index}`}>Описание</Label>
-        <Textarea
-          id={`description-${index}`}
-          rows={3}
-          placeholder="Подробное описание задачи"
-          value={task.description}
-          onChange={(e) => handleChange("description", e.target.value)}
-          data-testid={`textarea-task-description-${index}`}
-        />
+        {isEditing && portfolioId ? (
+          <CollaborativeInput
+            portfolioId={portfolioId}
+            fieldId="description"
+            taskId={index.toString()}
+            value={task.description}
+            onChange={(value) => handleChange('description', value)}
+            placeholder="Подробное описание задачи"
+            type="textarea"
+            rows={3}
+            data-testid={`textarea-task-description-${index}`}
+          />
+        ) : (
+          <Textarea
+            id={`description-${index}`}
+            rows={3}
+            placeholder="Подробное описание задачи"
+            value={task.description}
+            onChange={(e) => handleChange("description", e.target.value)}
+            data-testid={`textarea-task-description-${index}`}
+          />
+        )}
       </div>
     </div>
   );

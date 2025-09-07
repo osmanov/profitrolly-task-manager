@@ -1,8 +1,10 @@
-import { Calendar, Clock, ListTodo, Edit, Trash2, Plus } from "lucide-react";
+import { Calendar, Clock, ListTodo, Edit, Trash2, Plus, Users, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePortfolios, useDeletePortfolio } from "@/hooks/usePortfolio";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
 import {
   AlertDialog,
@@ -19,6 +21,7 @@ import {
 export default function PortfolioList() {
   const { portfolios, isLoading } = usePortfolios();
   const deletePortfolio = useDeletePortfolio();
+  const { user } = useAuth();
 
   const handleDelete = (id: string) => {
     deletePortfolio.mutate(id);
@@ -88,60 +91,83 @@ export default function PortfolioList() {
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-stretch">
-          {portfolios.map((portfolio) => (
-            <Card key={portfolio.id} className="hover:shadow-xl transition-all duration-300 border-l-4 border-l-blue-500 bg-blue-50 h-full" data-testid={`card-portfolio-${portfolio.id}`}>
-              <CardHeader>
-                <CardTitle className="text-base text-blue-700 font-bold" data-testid={`text-portfolio-name-${portfolio.id}`}>
-                  {portfolio.name}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-sm text-muted-foreground space-y-1 mb-4">
-                  <p className="flex items-center">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Начало: {formatDate(portfolio.startDate)}
-                  </p>
-                  <p className="flex items-center">
-                    <Clock className="h-4 w-4 mr-2" />
-                    Создано: {formatDate(portfolio.createdAt)}
-                  </p>
-                </div>
-                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                  <Link href={`/portfolios/${portfolio.id}`}>
-                    <Button variant="outline" size="sm" className="border-blue-500 text-blue-600 hover:bg-blue-100" data-testid={`button-edit-${portfolio.id}`}>
-                      <Edit className="h-4 w-4 mr-1" />
-                      Редактировать
-                    </Button>
-                  </Link>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="border-red-500 text-red-600 hover:bg-red-100" data-testid={`button-delete-${portfolio.id}`}>
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Удалить
+          {portfolios.map((portfolio) => {
+            const isOwner = portfolio.userId === user?.id;
+            const isShared = !isOwner; // If not owner, then it's shared with user
+            
+            return (
+              <Card key={portfolio.id} className={`hover:shadow-xl transition-all duration-300 border-l-4 ${isShared ? 'border-l-purple-500 bg-purple-50' : 'border-l-blue-500 bg-blue-50'} h-full`} data-testid={`card-portfolio-${portfolio.id}`}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className={`text-base font-bold ${isShared ? 'text-purple-700' : 'text-blue-700'}`} data-testid={`text-portfolio-name-${portfolio.id}`}>
+                      {portfolio.name}
+                    </CardTitle>
+                    <div className="flex items-center space-x-1">
+                      {isOwner ? (
+                        <Badge className="text-xs bg-blue-100 text-blue-800 border-blue-200">
+                          <Crown className="h-3 w-3 mr-1" />
+                          Владелец
+                        </Badge>
+                      ) : (
+                        <Badge className="text-xs bg-purple-100 text-purple-800 border-purple-200">
+                          <Users className="h-3 w-3 mr-1" />
+                          Совместный
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm text-muted-foreground space-y-1 mb-4">
+                    <p className="flex items-center">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Начало: {formatDate(portfolio.startDate)}
+                    </p>
+                    <p className="flex items-center">
+                      <Clock className="h-4 w-4 mr-2" />
+                      Создано: {formatDate(portfolio.createdAt)}
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                    <Link href={`/portfolios/${portfolio.id}`}>
+                      <Button variant="outline" size="sm" className={isShared ? 'border-purple-500 text-purple-600 hover:bg-purple-100' : 'border-blue-500 text-blue-600 hover:bg-blue-100'} data-testid={`button-edit-${portfolio.id}`}>
+                        <Edit className="h-4 w-4 mr-1" />
+                        {isOwner ? 'Редактировать' : 'Открыть'}
                       </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent className="bg-white dark:bg-white border border-gray-200 shadow-xl">
-                      <AlertDialogHeader>
-                        <AlertDialogTitle className="text-gray-900">Удалить Portfolio</AlertDialogTitle>
-                        <AlertDialogDescription className="text-gray-600">
-                          Вы уверены, что хотите удалить "{portfolio.name}"? Это действие нельзя будет отменить.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel className="bg-gray-100 text-gray-900 border-gray-300 hover:bg-gray-200">Отмена</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDelete(portfolio.id)}
-                          className="bg-red-600 text-white hover:bg-red-700"
-                        >
-                          Удалить
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                    </Link>
+                    {/* Only show delete button for owners */}
+                    {isOwner && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="border-red-500 text-red-600 hover:bg-red-100" data-testid={`button-delete-${portfolio.id}`}>
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Удалить
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="bg-white dark:bg-white border border-gray-200 shadow-xl">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="text-gray-900">Удалить Portfolio</AlertDialogTitle>
+                            <AlertDialogDescription className="text-gray-600">
+                              Вы уверены, что хотите удалить "{portfolio.name}"? Это действие нельзя будет отменить.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel className="bg-gray-100 text-gray-900 border-gray-300 hover:bg-gray-200">Отмена</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(portfolio.id)}
+                              className="bg-red-600 text-white hover:bg-red-700"
+                            >
+                              Удалить
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

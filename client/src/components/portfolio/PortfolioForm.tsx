@@ -10,10 +10,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { X, Plus } from "lucide-react";
 import TaskBlock from "./TaskBlock";
 import SummaryDisplay from "../calculations/SummaryDisplay";
+import CollaborationManager from "../collaboration/CollaborationManager";
 import { usePortfolio, useCreatePortfolio, useUpdatePortfolio, useCreateTask } from "@/hooks/usePortfolio";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useUnsavedChangesContext } from "@/contexts/UnsavedChangesContext";
+import { useAuth } from "@/hooks/useAuth";
 import type { CreatePortfolioData, CreateTaskData } from "@/types/portfolio";
 
 const portfolioSchema = z.object({
@@ -31,6 +33,7 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
   const [pendingNavigation, setPendingNavigation] = useState<string>("");
   const [isInitialized, setIsInitialized] = useState(false);
   const { hasUnsavedChanges, setHasUnsavedChanges } = useUnsavedChangesContext();
+  const { user } = useAuth();
   
   const markAsChanged = () => {
     if (isInitialized) {
@@ -379,12 +382,21 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
         </div>
 
         {/* Calculations Sidebar */}
-        <div className="lg:col-span-1 order-1 lg:order-2">
+        <div className="lg:col-span-1 order-1 lg:order-2 space-y-6">
           <SummaryDisplay
             tasks={tasks}
             portfolioName={watchedValues.name || ""}
             startDate={watchedValues.startDate || ""}
           />
+          
+          {/* Collaboration Manager - only show for existing portfolios */}
+          {isEditing && portfolio && (
+            <CollaborationManager
+              portfolioId={portfolioId!}
+              portfolioName={portfolio.name}
+              isOwner={portfolio.userId === user?.id}
+            />
+          )}
         </div>
       </div>
       

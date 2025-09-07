@@ -300,7 +300,20 @@ export default function PortfolioForm({ portfolioId }: PortfolioFormProps) {
         <div className="lg:col-span-2 order-2 lg:order-1">
           <Card className="shadow-xl border-t-4 border-t-blue-600 bg-blue-50">
             <CardHeader className="bg-blue-100">
-              <CardTitle className="text-blue-700 font-bold">Детали Portfolio</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-blue-700 font-bold">Детали Portfolio</CardTitle>
+                {isEditing && (
+                  <div className="flex items-center space-x-2">
+                    <Users className="h-4 w-4 text-green-600" />
+                    <span className="text-sm text-green-600 font-medium">
+                      Совместное редактирование
+                    </span>
+                    {isConnected && (
+                      <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    )}
+                  </div>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

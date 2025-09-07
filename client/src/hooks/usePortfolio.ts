@@ -186,14 +186,27 @@ export const useUpdateTask = () => {
 export const useDeleteTask = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { notifyTaskUpdate } = useWebSocket();
 
   return useMutation({
     mutationFn: async (id: string) => {
       const response = await api.tasks.delete(id);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (result, id) => {
       queryClient.invalidateQueries({ queryKey: ["/api/portfolios"] });
+      
+      // Notify other users via WebSocket about task deletion
+      // Note: We'll get portfolioId from the deleted task in the server response
+      if (result && result.portfolioId) {
+        notifyTaskUpdate(result.portfolioId, id, { deleted: true });
+      }
+      
+      toast({
+        title: "Успешно",
+        description: "Задача успешно удалена",
+        variant: "success",
+      });
     },
     onError: (error: any) => {
       toast({
